@@ -4,6 +4,7 @@ import (
 	"go-todo-api/internal/config"
 	"go-todo-api/internal/database"
 	"go-todo-api/internal/handlers"
+	"go-todo-api/internal/middleware"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -47,6 +48,9 @@ func main() {
 
 	router.POST("/auth/register", handlers.CreateUserHandler(pool))
 	router.POST("/auth/login", handlers.LoginHandler(pool, cfg))
+
+	// Middleware test route
+	router.GET("/protected-test", middleware.AuthMiddleware(cfg), handlers.TestProtectedHandler())
 
 	router.Run(":" + cfg.Port)
 }
