@@ -71,8 +71,15 @@ export class MedicalHistoryService {
     return ApiResponse.success<MedicalHistory>("Historial encontrado", history);
   }
 
-  update(id: string, updateMedicalHistoryDto: UpdateMedicalHistoryDto) {
-    return `This action updates a #${id} medicalHistory`;
+  async update(
+    id: string,
+    businessId: string,
+    updateMedicalHistoryDto: UpdateMedicalHistoryDto,
+  ): Promise<ApiResponse<void>> {
+    const history = await this.medicalHistoryRepository.update({ id, businessId }, updateMedicalHistoryDto);
+    if (history.affected === 0) throw new HttpException("Error al actualizar el historial", HttpStatus.BAD_REQUEST);
+
+    return ApiResponse.success("Historia médica actualizada");
   }
 
   remove(id: string) {
