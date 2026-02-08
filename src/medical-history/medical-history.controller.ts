@@ -27,6 +27,12 @@ export class MedicalHistoryController {
   }
 
   @RequiredPermissions("medical_history-view")
+  @Get(":id/patient/removed")
+  findAllByPatientRemoved(@BusinessId(ParseUUIDPipe) businessId: string, @Param("id") id: string) {
+    return this.medicalHistoryService.findAllByPatientRemoved(businessId, id);
+  }
+
+  @RequiredPermissions("medical_history-view")
   @Get(":id/patient")
   findAllByPatient(@BusinessId(ParseUUIDPipe) businessId: string, @Param("id") id: string) {
     return this.medicalHistoryService.findAllByPatient(businessId, id);
