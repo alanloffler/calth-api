@@ -82,6 +82,13 @@ export class MedicalHistoryService {
     return ApiResponse.success("Historia médica actualizada");
   }
 
+  async softRemove(id: string, businessId: string): Promise<ApiResponse<void>> {
+    const history = await this.medicalHistoryRepository.softDelete({ id, businessId });
+    if (history.affected === 0) throw new HttpException("Error al eliminar el historial", HttpStatus.BAD_REQUEST);
+
+    return ApiResponse.success("Historia médica eliminada");
+  }
+
   remove(id: string) {
     return `This action removes a #${id} medicalHistory`;
   }
