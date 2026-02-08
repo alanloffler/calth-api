@@ -20,6 +20,7 @@ export class MedicalHistoryController {
     return this.medicalHistoryService.create(businessId, createMedicalHistoryDto);
   }
 
+  @RequiredPermissions("medical_history-view")
   @Get()
   findAll(@BusinessId(ParseUUIDPipe) businessId: string) {
     return this.medicalHistoryService.findAll(businessId);
@@ -31,16 +32,23 @@ export class MedicalHistoryController {
     return this.medicalHistoryService.findAllByPatient(businessId, id);
   }
 
+  @RequiredPermissions("medical_history-view")
   @Get(":id")
   findOne(@BusinessId(ParseUUIDPipe) businessId: string, @Param("id") id: string) {
     return this.medicalHistoryService.findOne(businessId, id);
   }
 
+  @RequiredPermissions("medical_history-update")
   @Patch(":id")
-  update(@Param("id") id: string, @Body() updateMedicalHistoryDto: UpdateMedicalHistoryDto) {
-    return this.medicalHistoryService.update(id, updateMedicalHistoryDto);
+  update(
+    @BusinessId(ParseUUIDPipe) businessId: string,
+    @Param("id") id: string,
+    @Body() updateMedicalHistoryDto: UpdateMedicalHistoryDto,
+  ) {
+    return this.medicalHistoryService.update(id, businessId, updateMedicalHistoryDto);
   }
 
+  @RequiredPermissions("medical_history-delete-hard")
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.medicalHistoryService.remove(id);
