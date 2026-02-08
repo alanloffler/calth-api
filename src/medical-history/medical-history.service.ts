@@ -46,7 +46,20 @@ export class MedicalHistoryService {
     return ApiResponse.success<MedicalHistory[]>("Historiales encontrados", histories);
   }
 
-  // Find all medical histories for business and patient
+  async findAllByPatientRemoved(businessId: string, userId: string): Promise<ApiResponse<MedicalHistory[]>> {
+    // TODO: check businessId & userId???
+    // TODO: user & event relation if needed
+    const histories = await this.medicalHistoryRepository.find({
+      where: { businessId, userId },
+      order: { date: "DESC" },
+      relations: ["user"],
+      withDeleted: true,
+    });
+    if (!histories) throw new HttpException("Error al obtener el historial médico", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<MedicalHistory[]>("Historial médico encontrado", histories);
+  }
+
   async findAllByPatient(businessId: string, userId: string): Promise<ApiResponse<MedicalHistory[]>> {
     // TODO: check businessId & userId???
     // TODO: user & event relation if needed
