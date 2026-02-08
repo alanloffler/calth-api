@@ -48,6 +48,12 @@ export class MedicalHistoryController {
     return this.medicalHistoryService.update(id, businessId, updateMedicalHistoryDto);
   }
 
+  @RequiredPermissions("medical_history-delete")
+  @Delete(":id/soft")
+  softRemove(@BusinessId(ParseUUIDPipe) businessId: string, @Param("id") id: string) {
+    return this.medicalHistoryService.softRemove(id, businessId);
+  }
+
   @RequiredPermissions("medical_history-delete-hard")
   @Delete(":id")
   remove(@Param("id") id: string) {
