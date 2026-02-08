@@ -38,6 +38,12 @@ export class MedicalHistoryController {
     return this.medicalHistoryService.findOne(businessId, id);
   }
 
+  @RequiredPermissions("medical_history-restore")
+  @Patch(":id/restore")
+  restore(@BusinessId(ParseUUIDPipe) businessId: string, @Param("id") id: string) {
+    return this.medicalHistoryService.restore(id, businessId);
+  }
+
   @RequiredPermissions("medical_history-update")
   @Patch(":id")
   update(
