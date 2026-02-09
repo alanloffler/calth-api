@@ -68,7 +68,7 @@ export class MedicalHistoryController {
 
   @RequiredPermissions("medical_history-delete-hard")
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.medicalHistoryService.remove(id);
+  remove(@BusinessId(ParseUUIDPipe) businessId: string, @Param("id") id: string) {
+    return this.medicalHistoryService.remove(id, businessId);
   }
 }
