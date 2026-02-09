@@ -269,6 +269,21 @@ export class UsersService {
     return ApiResponse.success<User>("Paciente encontrado", user);
   }
 
+  // Used on FE Patient view !superAdmin
+  async findPatientWithProfile(businessId: string, id: string): Promise<ApiResponse<User>> {
+    const user = await this.userRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.role", "role")
+      .leftJoinAndSelect("user.patientProfile", "profile")
+      .select([...USER_SELECT, ...USER_ROLE_SELECT, ...PATIENT_PROFILE_SELECT])
+      .where("user.businessId = :businessId", { businessId })
+      .andWhere("user.id = :id", { id })
+      .getOne();
+    if (!user) throw new HttpException("Paciente no encontrado", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<User>("Paciente encontrado", user);
+  }
+
   // TODO: maybe remove after implement updatePatient
   async update(id: string, businessId: string, updateUserDto: UpdateUserDto) {
     const user = await this.userRepository.findOne({
