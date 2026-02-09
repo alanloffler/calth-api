@@ -109,7 +109,10 @@ export class MedicalHistoryService {
     return ApiResponse.success("Historia médica restaurada");
   }
 
-  remove(id: string) {
-    return `This action removes a #${id} medicalHistory`;
+  async remove(id: string, businessId: string): Promise<ApiResponse<void>> {
+    const history = await this.medicalHistoryRepository.delete({ id, businessId });
+    if (history.affected === 0) throw new HttpException("Error al eliminar la historia médica", HttpStatus.BAD_REQUEST);
+
+    return ApiResponse.success("Historia médica eliminada");
   }
 }
