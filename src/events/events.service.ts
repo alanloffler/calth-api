@@ -22,15 +22,19 @@ export class EventsService {
     await this.checkProfessional(createEventDto.professionalId, businessId);
     await this.checkPatient(createEventDto.userId, businessId);
 
-    const slotAvailable = await this.checkSlotAvailable(createEventDto, businessId);
-    if (!slotAvailable) throw new HttpException("El turno ya existe en la agenda", HttpStatus.BAD_REQUEST);
-
     const fullDto = { ...createEventDto, businessId };
     const newEvent = this.eventRepository.create(fullDto);
-    const saveEvent = await this.eventRepository.save(newEvent);
-    if (!saveEvent) throw new HttpException("Error al crear el turno", HttpStatus.BAD_REQUEST);
 
-    return ApiResponse.created<Event>("Turno creado", saveEvent);
+    try {
+      const saveEvent = await this.eventRepository.save(newEvent);
+      return ApiResponse.created<Event>("Turno creado", saveEvent);
+    } catch (error: any) {
+      if (error?.driverError?.code === "23505") {
+        throw new HttpException("El horario ya fue tomado por otro usuario", HttpStatus.CONFLICT);
+      }
+
+      throw new HttpException("Error al crear el turno", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async findAll(businessId: string, professionalId: string): Promise<ApiResponse<Event[]>> {
