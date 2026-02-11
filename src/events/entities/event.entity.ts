@@ -10,6 +10,7 @@ import {
   DeleteDateColumn,
 } from "typeorm";
 
+import { EEventStatus } from "@common/enums/event-status.enum";
 import { User } from "@users/entities/user.entity";
 
 @Entity("events")
@@ -45,6 +46,9 @@ export class Event {
   @ManyToOne(() => User, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
   user: User;
+
+  @Column({ type: "enum", enum: EEventStatus, nullable: false, default: EEventStatus.PENDING })
+  status: EEventStatus;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
