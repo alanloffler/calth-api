@@ -1,6 +1,6 @@
 export const EEventStatus = {
   ABSENT: "absent",
-  ATTENDEND: "attended",
+  ATTENDED: "attended",
   CANCELLED: "cancelled",
   IN_PROGRESS: "in_progress",
   PENDING: "pending",
