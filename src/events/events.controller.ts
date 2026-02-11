@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUID
 
 import { BusinessId } from "@common/decorators/business-id.decorator";
 import { CreateEventDto } from "@events/dto/create-event.dto";
+import { EEventStatus } from "@common/enums/event-status.enum";
 import { EventsService } from "@events/events.service";
 import { JwtAuthGuard } from "@auth/guards/jwt-auth.guard";
 import { PermissionsGuard } from "@auth/guards/permissions.guard";
@@ -52,6 +53,16 @@ export class EventsController {
   @Get(":id")
   findOne(@Param("id", ParseUUIDPipe) id: string, @BusinessId(ParseUUIDPipe) businessId: string) {
     return this.eventsService.findOne(id, businessId);
+  }
+
+  @RequiredPermissions("events-update")
+  @Patch(":id/status")
+  updateStatus(
+    @Param("id", ParseUUIDPipe) id: string,
+    @BusinessId(ParseUUIDPipe) businessId: string,
+    @Body() status: EEventStatus,
+  ) {
+    return this.eventsService.updateStatus(id, businessId, status);
   }
 
   @RequiredPermissions("events-update")
