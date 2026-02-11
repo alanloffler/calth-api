@@ -60,7 +60,7 @@ export class EventsController {
   updateStatus(
     @Param("id", ParseUUIDPipe) id: string,
     @BusinessId(ParseUUIDPipe) businessId: string,
-    @Body() status: EEventStatus,
+    @Body("status") status: EEventStatus,
   ) {
     return this.eventsService.updateStatus(id, businessId, status);
   }
