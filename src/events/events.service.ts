@@ -5,6 +5,7 @@ import { LessThan, MoreThan, Not, Repository } from "typeorm";
 import { ApiResponse } from "@common/helpers/api-response.helper";
 import { BusinessService } from "@business/business.service";
 import { CreateEventDto } from "@events/dto/create-event.dto";
+import { EEventStatus } from "@common/enums/event-status.enum";
 import { Event } from "@events/entities/event.entity";
 import { UpdateEventDto } from "@events/dto/update-event.dto";
 import { UsersService } from "@users/users.service";
@@ -142,6 +143,10 @@ export class EventsService {
     if (!event) throw new HttpException("Turno no encontrado", HttpStatus.NOT_FOUND);
 
     return ApiResponse.success<Event>("Turno encontrado", event);
+  }
+
+  async updateStatus(eventId: string, businessId: string, status: EEventStatus) {
+    console.log(eventId, businessId, status);
   }
 
   async update(id: string, updateEventDto: UpdateEventDto, businessId: string): Promise<ApiResponse<Event>> {
