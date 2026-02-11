@@ -145,8 +145,14 @@ export class EventsService {
     return ApiResponse.success<Event>("Turno encontrado", event);
   }
 
-  async updateStatus(eventId: string, businessId: string, status: EEventStatus) {
-    console.log(eventId, businessId, status);
+  async updateStatus(eventId: string, businessId: string, status: EEventStatus): Promise<ApiResponse<boolean>> {
+    const event = await this.findOneById(eventId, businessId);
+    event.status = status;
+
+    const result = this.eventRepository.save(event);
+    if (!result) throw new HttpException("Error al actualizar el estado del turno", HttpStatus.BAD_REQUEST);
+
+    return ApiResponse.success("Estado del turno actualizado", true);
   }
 
   async update(id: string, updateEventDto: UpdateEventDto, businessId: string): Promise<ApiResponse<Event>> {
