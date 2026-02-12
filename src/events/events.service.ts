@@ -46,7 +46,9 @@ export class EventsService {
     }
   }
 
-  async findAllByBusiness(businessId: string): Promise<ApiResponse<Event[]>> {
+  async findAllByBusiness(businessId: string, limit: string): Promise<ApiResponse<Event[]>> {
+    const queryLimit = limit ? parseInt(limit) : 10;
+
     const events = await this.eventRepository
       .createQueryBuilder("event")
       .where("event.businessId = :businessId", { businessId })
@@ -57,7 +59,7 @@ export class EventsService {
       .select(["event", ...EVENT_USER_SELECT, ...EVENT_ROLE_SELECT, ...EVENT_PROF_SELECT, ...EVENT_PROF_PROFILE_SELECT])
       .orderBy("event.start_date::date", "DESC")
       .addOrderBy("event.start_date::time", "ASC")
-      .limit(10)
+      .limit(queryLimit)
       .getMany();
 
     if (!events) throw new HttpException("Error al obtener los turnos", HttpStatus.NOT_FOUND);
