@@ -12,6 +12,8 @@ import { UsersService } from "@users/users.service";
 
 @Injectable()
 export class EventsService {
+  readonly TIME_ZONE = "-03";
+
   constructor(
     @InjectRepository(Event) private readonly eventRepository: Repository<Event>,
     private readonly businessService: BusinessService,
@@ -74,14 +76,13 @@ export class EventsService {
 
   async findAllByDate(businessId: string, professionalId: string, date: string): Promise<ApiResponse<Event[]>> {
     // TODO: get timezone from param if business is not from ARGENTINA
-    const TIME_ZONE = "-03";
     const events = await this.eventRepository
       .createQueryBuilder("event")
       .where("event.businessId = :businessId", { businessId })
       .andWhere("event.professionalId = :professionalId", { professionalId })
       .andWhere("event.startDate >= :startOfDay AND event.startDate <= :endOfDay", {
-        startOfDay: `${date} 00:00:00${TIME_ZONE}`,
-        endOfDay: `${date} 23:59:59${TIME_ZONE}`,
+        startOfDay: `${date} 00:00:00${this.TIME_ZONE}`,
+        endOfDay: `${date} 23:59:59${this.TIME_ZONE}`,
       })
       .leftJoin("event.user", "user")
       .leftJoin("user.role", "userRole")
@@ -114,14 +115,13 @@ export class EventsService {
 
   async findAllByDateArray(businessId: string, professionalId: string, date: string): Promise<ApiResponse<string[]>> {
     // TODO: get timezone from param if business is not from ARGENTINA
-    const TIME_ZONE = "-03";
     const events = await this.eventRepository
       .createQueryBuilder("event")
       .where("event.businessId = :businessId", { businessId })
       .andWhere("event.professionalId = :professionalId", { professionalId })
       .andWhere("event.startDate >= :startOfDay AND event.startDate <= :endOfDay", {
-        startOfDay: `${date} 00:00:00${TIME_ZONE}`,
-        endOfDay: `${date} 23:59:59${TIME_ZONE}`,
+        startOfDay: `${date} 00:00:00${this.TIME_ZONE}`,
+        endOfDay: `${date} 23:59:59${this.TIME_ZONE}`,
       })
       .select(["event.startDate"])
       .getMany();
@@ -130,7 +130,7 @@ export class EventsService {
     const dates = events
       .map((event) => {
         const utcTime = event.startDate.getTime();
-        const localTime = new Date(utcTime + parseInt(TIME_ZONE, 10) * 60 * 60 * 1000);
+        const localTime = new Date(utcTime + parseInt(this.TIME_ZONE, 10) * 60 * 60 * 1000);
         return localTime.toISOString().substring(11, 16);
       })
       .sort((a, b) => a.localeCompare(b));
