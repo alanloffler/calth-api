@@ -6,6 +6,12 @@ import { ApiResponse } from "@common/helpers/api-response.helper";
 import { BusinessService } from "@business/business.service";
 import { CreateEventDto } from "@events/dto/create-event.dto";
 import { EEventStatus } from "@common/enums/event-status.enum";
+import {
+  EVENT_PROF_PROFILE_SELECT,
+  EVENT_PROF_SELECT,
+  EVENT_ROLE_SELECT,
+  EVENT_USER_SELECT,
+} from "@events/constants/event-select.constant";
 import { Event } from "@events/entities/event.entity";
 import { UpdateEventDto } from "@events/dto/update-event.dto";
 import { UsersService } from "@users/users.service";
@@ -38,6 +44,25 @@ export class EventsService {
 
       throw new HttpException("Error al crear el turno", HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  async findAllByBusiness(businessId: string): Promise<ApiResponse<Event[]>> {
+    const events = await this.eventRepository
+      .createQueryBuilder("event")
+      .where("event.businessId = :businessId", { businessId })
+      .leftJoin("event.user", "user")
+      .leftJoin("user.role", "userRole")
+      .leftJoin("event.professional", "professional")
+      .leftJoin("professional.professionalProfile", "professionalProfile")
+      .select(["event", ...EVENT_USER_SELECT, ...EVENT_ROLE_SELECT, ...EVENT_PROF_SELECT, ...EVENT_PROF_PROFILE_SELECT])
+      .orderBy("event.start_date::date", "DESC")
+      .addOrderBy("event.start_date::time", "ASC")
+      .limit(10)
+      .getMany();
+
+    if (!events) throw new HttpException("Error al obtener los turnos", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<Event[]>("Turnos encontrados", events);
   }
 
   async findAll(businessId: string, professionalId: string): Promise<ApiResponse<Event[]>> {
