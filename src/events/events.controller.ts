@@ -34,7 +34,7 @@ export class EventsController {
   @RequiredPermissions("events-view")
   @Get("professional/:professionalId/date/:date")
   findAllByDate(
-    @BusinessId() businessId: string,
+    @BusinessId(ParseUUIDPipe) businessId: string,
     @Param("professionalId", ParseUUIDPipe) professionalId: string,
     @Param("date") date: string,
   ) {
@@ -44,7 +44,7 @@ export class EventsController {
   @RequiredPermissions("events-view")
   @Get("professional/:professionalId/date-array/:date")
   findAllByDateArray(
-    @BusinessId() businessId: string,
+    @BusinessId(ParseUUIDPipe) businessId: string,
     @Param("professionalId", ParseUUIDPipe) professionalId: string,
     @Param("date") date: string,
   ) {
