@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe } from "@nestjs/common";
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe, Query } from "@nestjs/common";
 
 import { BusinessId } from "@common/decorators/business-id.decorator";
 import { CreateEventDto } from "@events/dto/create-event.dto";
@@ -53,8 +53,8 @@ export class EventsController {
 
   @RequiredPermissions("events-view")
   @Get("business")
-  findAllByBusiness(@BusinessId(ParseUUIDPipe) businessId: string) {
-    return this.eventsService.findAllByBusiness(businessId);
+  findAllByBusiness(@BusinessId(ParseUUIDPipe) businessId: string, @Query("limit") limit: string) {
+    return this.eventsService.findAllByBusiness(businessId, limit);
   }
 
   @RequiredPermissions("events-view")
