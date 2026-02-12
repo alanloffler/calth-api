@@ -79,6 +79,25 @@ export class UsersService {
     return manager.save(user);
   }
 
+  async findLatestPatients(businessId: string, limit: string) {
+    const queryLimit = limit ? parseInt(limit) : 10;
+
+    const users = await this.userRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.role", "role")
+      .leftJoinAndSelect("user.professionalProfile", "profile")
+      .select([...USER_SELECT, ...USER_ROLE_SELECT, "profile.professionalPrefix"])
+      .where("user.businessId = :businessId", { businessId })
+      .andWhere("role.value = :role", { role: "patient" })
+      .orderBy("user.createdAt", "DESC")
+      .limit(queryLimit)
+      .getMany();
+
+    if (!users) throw new HttpException("Pacientes no encontrados", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<User[]>("Pacientes encontrados", users);
+  }
+
   async findAll(role: string, businessId: string): Promise<ApiResponse<User[]>> {
     const users = await this.userRepository
       .createQueryBuilder("user")
