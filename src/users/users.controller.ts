@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Request, Delete, UseGuards, ParseUUIDPipe } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Request,
+  Delete,
+  UseGuards,
+  ParseUUIDPipe,
+  Query,
+} from "@nestjs/common";
 
 import type { IRequest } from "@auth/interfaces/request.interface";
 import { BusinessId } from "@common/decorators/business-id.decorator";
@@ -86,6 +98,14 @@ export class UsersController {
   //   return this.usersService.update(userId, user, businessId);
   // }
 
+  @RequiredPermissions("patient-view")
+  @Get("role/patient")
+  findLatestPatients(@BusinessId(ParseUUIDPipe) businessId: string, @Query("limit") limit: string) {
+    return this.usersService.findLatestPatients(businessId, limit);
+  }
+
+  // TODO: refactor into a new controller to handle only professionals
+  // Or see what FE is consuming (use findProfessionalWithProfile???)
   @RequiredPermissions(["admin-view", "patient-view", "professional-view"], "some")
   @Get("role/:role")
   findAll(@Param("role") role: string, @BusinessId() businessId: string) {
