@@ -21,7 +21,6 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@/*": ["./src/*"],
       "@admin/*": ["./src/admin/*"],
       "@auth/*": ["./src/auth/*"],
       "@business/*": ["./src/business/*"],
@@ -35,7 +34,8 @@
       "@professional-profile/*": ["./src/professional-profile/*"],
       "@roles/*": ["./src/roles/*"],
       "@settings/*": ["./src/settings/*"],
-      "@users/*": ["./src/users/*"]
+      "@users/*": ["./src/users/*"],
+      "@/*": ["./src/*"]
     }
   }
 }
