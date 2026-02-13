@@ -22,6 +22,7 @@ import { JwtAuthGuard } from "@auth/guards/jwt-auth.guard";
 import { PermissionsGuard } from "@auth/guards/permissions.guard";
 import { RemoveProfessionalUseCase } from "@users/use-cases/professional/remove-professional.use-case";
 import { RequiredPermissions } from "@auth/decorators/required-permissions.decorator";
+import { RestorePatientUseCase } from "@users/use-cases/patient/restore-patient.use-case";
 import { RestoreProfessionalUseCase } from "@users/use-cases/professional/restore-professional.use-case";
 import { SoftRemovePatientUserCase } from "@users/use-cases/patient/soft-remove-patient.use-case";
 import { SoftRemoveProfessionalUserCase } from "@users/use-cases/professional/soft-remove-professional.use-case";
@@ -37,6 +38,7 @@ export class UsersController {
     private readonly createPatientUseCase: CreatePatientUseCase,
     private readonly createProfessionalUseCase: CreateProfessionalUseCase,
     private readonly removeProfessionalUseCase: RemoveProfessionalUseCase,
+    private readonly restorePatientUseCase: RestorePatientUseCase,
     private readonly restoreProfessionalUseCase: RestoreProfessionalUseCase,
     private readonly softRemovePatientUseCase: SoftRemovePatientUserCase,
     private readonly softRemoveProfessionalUseCase: SoftRemoveProfessionalUserCase,
@@ -162,6 +164,12 @@ export class UsersController {
   @Get(":id")
   findOne(@Param("id", ParseUUIDPipe) id: string, @BusinessId() businessId: string) {
     return this.usersService.findOne(id, businessId);
+  }
+
+  @RequiredPermissions("patient-restore")
+  @Patch(":id/patient/restore")
+  restorePatient(@Param("id", ParseUUIDPipe) id: string, @BusinessId(ParseUUIDPipe) businessId: string) {
+    return this.restorePatientUseCase.execute(id, businessId);
   }
 
   @RequiredPermissions("professional-restore")
