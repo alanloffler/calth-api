@@ -60,16 +60,16 @@ export class PatientProfileService {
     }
   }
 
-  // async remove(userId: string, businessId: string, manager: EntityManager): Promise<void> {
-  //   const profile = await manager.findOne(ProfessionalProfile, { where: { userId, businessId } });
-  //   if (!profile) throw new HttpException("Perfil profesional no encontrado", HttpStatus.NOT_FOUND);
-  //
-  //   try {
-  //     await manager.remove(profile);
-  //   } catch {
-  //     throw new HttpException("Error al eliminar el perfil del profesional", HttpStatus.INTERNAL_SERVER_ERROR);
-  //   }
-  // }
+  async remove(userId: string, businessId: string, manager: EntityManager): Promise<void> {
+    const profile = await manager.findOne(PatientProfile, { where: { userId, businessId } });
+    if (!profile) throw new HttpException("Perfil de paciente no encontrado", HttpStatus.NOT_FOUND);
+
+    try {
+      await manager.remove(profile);
+    } catch {
+      throw new HttpException("Error al eliminar el perfil del paciente", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 
   async restore(userId: string, businessId: string, manager: EntityManager): Promise<void> {
     const profile = await manager.findOne(PatientProfile, { where: { businessId, userId }, withDeleted: true });
