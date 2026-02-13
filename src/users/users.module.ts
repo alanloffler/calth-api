@@ -6,6 +6,7 @@ import { CreateProfessionalUseCase } from "@users/use-cases/professional/create-
 import { PatientProfileService } from "@patient-profile/patient-profile.service";
 import { ProfessionalProfileService } from "@professional-profile/professional-profile.service";
 import { RemoveProfessionalUseCase } from "@users/use-cases/professional/remove-professional.use-case";
+import { RestorePatientUseCase } from "@users/use-cases/patient/restore-patient.use-case";
 import { RestoreProfessionalUseCase } from "@users/use-cases/professional/restore-professional.use-case";
 import { Role } from "@roles/entities/role.entity";
 import { SoftRemovePatientUserCase } from "@users/use-cases/patient/soft-remove-patient.use-case";
@@ -24,6 +25,7 @@ import { UsersService } from "@users/users.service";
     PatientProfileService,
     ProfessionalProfileService,
     RemoveProfessionalUseCase,
+    RestorePatientUseCase,
     RestoreProfessionalUseCase,
     SoftRemovePatientUserCase,
     SoftRemoveProfessionalUserCase,
