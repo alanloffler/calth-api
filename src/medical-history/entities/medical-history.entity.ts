@@ -27,14 +27,14 @@ export class MedicalHistory {
   @Column({ name: "user_id", type: "uuid", nullable: false })
   userId: string;
 
-  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @ManyToOne(() => User, { onDelete: "RESTRICT" })
   @JoinColumn({ name: "user_id" })
   user: User;
 
-  @Column({ name: "professional_id", type: "uuid", nullable: false })
+  @Column({ name: "professional_id", type: "uuid", nullable: true })
   professionalId: string;
 
-  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @ManyToOne(() => User, { onDelete: "SET NULL" })
   @JoinColumn({ name: "professional_id" })
   professional: User;
 
