@@ -31,6 +31,13 @@ export class MedicalHistory {
   @JoinColumn({ name: "user_id" })
   user: User;
 
+  @Column({ name: "professional_id", type: "uuid", nullable: false })
+  professionalId: string;
+
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "professional_id" })
+  professional: User;
+
   @Column({ type: "timestamptz", nullable: false })
   date: Date;
 
