@@ -52,7 +52,7 @@ export class MedicalHistoryService {
     const histories = await this.medicalHistoryRepository.find({
       where: { businessId, userId },
       order: { date: "DESC" },
-      relations: ["user"],
+      relations: ["user", "professional", "professional.professionalProfile"],
       withDeleted: true,
     });
     if (!histories) throw new HttpException("Error al obtener el historial médico", HttpStatus.NOT_FOUND);
