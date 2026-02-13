@@ -380,7 +380,13 @@ export class UsersService {
 
     try {
       await manager.remove(user);
-    } catch {
+    } catch (error) {
+      const pgCode = error.code || error.driverError?.code;
+      const pgTable = error.table || error.driverError?.table;
+
+      if (pgCode === "23503" && pgTable === "medical_history") {
+        throw new HttpException("No podes eliminar un paciente con historias médicas", HttpStatus.CONFLICT);
+      }
       throw new HttpException("Error al eliminar usuario", HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
