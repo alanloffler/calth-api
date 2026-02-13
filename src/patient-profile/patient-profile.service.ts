@@ -48,4 +48,15 @@ export class PatientProfileService {
       throw new HttpException("Error al actualizar el perfil del paciente", HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  async softRemove(userId: string, businessId: string, manager: EntityManager): Promise<void> {
+    const profile = await manager.findOne(PatientProfile, { where: { userId, businessId } });
+    if (!profile) throw new HttpException("Perfil de paciente no encontrado", HttpStatus.NOT_FOUND);
+
+    try {
+      await manager.softRemove(profile);
+    } catch {
+      throw new HttpException("Error al eliminar el perfil del paciente", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }
