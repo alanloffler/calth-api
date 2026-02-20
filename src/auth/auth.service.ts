@@ -152,12 +152,12 @@ export class AuthService {
       secure: true,
     };
 
-    res.cookie("accessToken", tokens.accessToken, {
+    res.cookie("access_token", tokens.accessToken, {
       ...cookieOptions,
       maxAge: this.getMiliseconds(this.configService.get("JWT_EXPIRES_IN")),
     });
 
-    res.cookie("refreshToken", tokens.refreshToken, {
+    res.cookie("refresh_token", tokens.refreshToken, {
       ...cookieOptions,
       maxAge: this.getMiliseconds(this.configService.get("JWT_REFRESH_EXPIRES_IN")),
     });
@@ -181,8 +181,8 @@ export class AuthService {
       secure: true,
     };
 
-    res.cookie("accessToken", "", cookieOptions);
-    res.cookie("refreshToken", "", cookieOptions);
+    res.cookie("access_token", "", cookieOptions);
+    res.cookie("refresh_token", "", cookieOptions);
   }
 
   private getMiliseconds(time: string | undefined): number {
