@@ -9,7 +9,7 @@ import { UpdateBusinessDto } from "@business/dto/update-business.dto";
 
 // TODO: add permissions
 @UseGuards(JwtAuthGuard, PermissionsGuard)
-@Controller("business")
+@Controller("businesses")
 export class BusinessController {
   constructor(private readonly businessService: BusinessService) {}
 
