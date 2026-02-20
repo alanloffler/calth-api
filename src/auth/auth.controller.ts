@@ -12,21 +12,21 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @UseGuards(LocalAuthGuard)
-  @Post("signIn")
+  @Post("login")
   signIn(@Req() req: IRequest, @Res({ passthrough: true }) res: Response) {
     return this.authService.signIn(req, res);
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get("signOut")
+  @Get("logout")
   signOut(@Req() req: IRequest, @Res({ passthrough: true }) res: Response) {
     return this.authService.signOut(req.user, res);
   }
 
   @UseGuards(JwtRefreshAuthGuard)
-  @Post("refreshToken")
+  @Post("refresh")
   refreshToken(@Req() req: IRequest, @Res({ passthrough: true }) res: Response) {
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies.refresh_token;
     if (!refreshToken) throw new HttpException("Token de refresco no encontrado", HttpStatus.BAD_REQUEST);
 
     return this.authService.refreshToken(req.user, refreshToken, res);
