@@ -26,9 +26,15 @@ export class RolesController {
   }
 
   @RequiredPermissions("roles-view")
-  @Get("soft-removed")
+  @Get("soft")
   findAllSoftRemoved() {
     return this.rolesService.findAllSoftRemoved();
+  }
+
+  @RequiredPermissions("roles-view")
+  @Get(":id/soft")
+  findOneSoftRemoved(@Param("id", ParseUUIDPipe) id: string) {
+    return this.rolesService.findOneSoftRemoved(id);
   }
 
   @RequiredPermissions("roles-view")
@@ -37,10 +43,10 @@ export class RolesController {
     return this.rolesService.findOne(id);
   }
 
-  @RequiredPermissions("roles-view")
-  @Get(":id/soft-removed")
-  findOneSoftRemoved(@Param("id", ParseUUIDPipe) id: string) {
-    return this.rolesService.findOneSoftRemoved(id);
+  @RequiredPermissions("roles-restore")
+  @Patch(":id/restore")
+  restore(@Param("id", ParseUUIDPipe) id: string) {
+    return this.rolesService.restore(id);
   }
 
   @RequiredPermissions("roles-update")
@@ -49,21 +55,15 @@ export class RolesController {
     return this.rolesService.update(id, updateRoleDto);
   }
 
-  @RequiredPermissions("roles-delete-hard")
-  @Delete(":id")
-  remove(@Param("id", ParseUUIDPipe) id: string) {
-    return this.rolesService.remove(id);
-  }
-
   @RequiredPermissions("roles-delete")
-  @Delete("soft-remove/:id")
+  @Delete(":id/soft")
   softRemove(@Param("id", ParseUUIDPipe) id: string) {
     return this.rolesService.softRemove(id);
   }
 
-  @RequiredPermissions("roles-restore")
-  @Patch("restore/:id")
-  restore(@Param("id", ParseUUIDPipe) id: string) {
-    return this.rolesService.restore(id);
+  @RequiredPermissions("roles-delete-hard")
+  @Delete(":id")
+  remove(@Param("id", ParseUUIDPipe) id: string) {
+    return this.rolesService.remove(id);
   }
 }
