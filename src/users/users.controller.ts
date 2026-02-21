@@ -110,18 +110,19 @@ export class UsersController {
     return this.usersService.findLatestPatients(businessId, limit);
   }
 
+  // IMPORTANT: this is consumed on superadmin logged user finding user by role (all 3)
+  @RequiredPermissions(["admin-view", "patient-view", "professional-view"], "some")
+  @Get("role/:role/soft")
+  findAllSoftRemoved(@Param("role") role: string, @BusinessId() businessId: string) {
+    return this.usersService.findAllSoftRemoved(role, businessId);
+  }
+
   // TODO: refactor into a new controller to handle only professionals
   // Or see what FE is consuming (use findProfessionalWithProfile???)
   @RequiredPermissions(["admin-view", "patient-view", "professional-view"], "some")
   @Get("role/:role")
   findAll(@Param("role") role: string, @BusinessId() businessId: string) {
     return this.usersService.findAll(role, businessId);
-  }
-
-  @RequiredPermissions(["admin-view", "patient-view", "professional-view"], "some")
-  @Get("all-soft-remove/:role")
-  findAllSoftRemoved(@Param("role") role: string, @BusinessId() businessId: string) {
-    return this.usersService.findAllSoftRemoved(role, businessId);
   }
 
   // Find patient soft removed with profile
