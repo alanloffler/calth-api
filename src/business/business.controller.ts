@@ -18,9 +18,9 @@ export class BusinessController {
     return this.businessService.create(createBusinessDto);
   }
 
-  @Get("find-one")
-  findOne(@BusinessId(ParseUUIDPipe) id: string) {
-    return this.businessService.findOne(id);
+  @Get()
+  findAll() {
+    return this.businessService.findAll();
   }
 
   @Get("check-slug-availability/:slug")
@@ -28,9 +28,9 @@ export class BusinessController {
     return this.businessService.checkSlugAvailability(slug);
   }
 
-  @Get()
-  findAll() {
-    return this.businessService.findAll();
+  @Get(":id")
+  findOne(@Param("id") id: string) {
+    return this.businessService.findOne(id);
   }
 
   @Patch(":id")
