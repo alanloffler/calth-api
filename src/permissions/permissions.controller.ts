@@ -45,6 +45,12 @@ export class PermissionsController {
     return this.permissionsService.findOne(id);
   }
 
+  @RequiredPermissions("permissions-restore")
+  @Patch(":id/restore")
+  restore(@Param("id", ParseUUIDPipe) id: string) {
+    return this.permissionsService.restore(id);
+  }
+
   @RequiredPermissions("permissions-update")
   @Patch(":id")
   update(@Param("id", ParseUUIDPipe) id: string, @Body() updatePermissionDto: UpdatePermissionDto) {
@@ -52,7 +58,7 @@ export class PermissionsController {
   }
 
   @RequiredPermissions("permissions-delete")
-  @Delete("soft-remove/:id")
+  @Delete(":id/soft")
   softRemove(@Param("id", ParseUUIDPipe) id: string) {
     return this.permissionsService.softRemove(id);
   }
@@ -61,11 +67,5 @@ export class PermissionsController {
   @Delete(":id")
   remove(@Param("id", ParseUUIDPipe) id: string) {
     return this.permissionsService.remove(id);
-  }
-
-  @RequiredPermissions("permissions-restore")
-  @Patch("restore/:id")
-  restore(@Param("id", ParseUUIDPipe) id: string) {
-    return this.permissionsService.restore(id);
   }
 }
