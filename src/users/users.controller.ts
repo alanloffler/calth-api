@@ -20,13 +20,15 @@ import { CreateProfessionalDto } from "@users/dto/create-professional.dto";
 import { CreateProfessionalUseCase } from "@users/use-cases/professional/create-professional.use-case";
 import { JwtAuthGuard } from "@auth/guards/jwt-auth.guard";
 import { PermissionsGuard } from "@auth/guards/permissions.guard";
-import { RemoveProfessionalUseCase } from "@users/use-cases/professional/remove-professional.use-case";
 import { RemovePatientUseCase } from "@users/use-cases/patient/remove-patient.use-case";
+import { RemoveProfessionalUseCase } from "@users/use-cases/professional/remove-professional.use-case";
 import { RequiredPermissions } from "@auth/decorators/required-permissions.decorator";
 import { RestorePatientUseCase } from "@users/use-cases/patient/restore-patient.use-case";
 import { RestoreProfessionalUseCase } from "@users/use-cases/professional/restore-professional.use-case";
 import { SoftRemovePatientUserCase } from "@users/use-cases/patient/soft-remove-patient.use-case";
 import { SoftRemoveProfessionalUserCase } from "@users/use-cases/professional/soft-remove-professional.use-case";
+import { UpdatePatientDto } from "@users/dto/update-patient.dto";
+import { UpdatePatientUseCase } from "@users/use-cases/professional/update-patient.use-case";
 import { UpdateProfessionalDto } from "@users/dto/update-professional.dto";
 import { UpdateProfessionalUseCase } from "@users/use-cases/professional/update-professional.use-case";
 import { UpdateUserDto } from "@users/dto/update-user.dto";
@@ -44,6 +46,7 @@ export class UsersController {
     private readonly restoreProfessionalUseCase: RestoreProfessionalUseCase,
     private readonly softRemovePatientUseCase: SoftRemovePatientUserCase,
     private readonly softRemoveProfessionalUseCase: SoftRemoveProfessionalUserCase,
+    private readonly updatePatientUseCase: UpdatePatientUseCase,
     private readonly updateProfessionalUseCase: UpdateProfessionalUseCase,
     private readonly usersService: UsersService,
   ) {}
@@ -179,6 +182,16 @@ export class UsersController {
   @Patch(":id/professional/restore")
   restoreProfessional(@Param("id", ParseUUIDPipe) id: string, @BusinessId(ParseUUIDPipe) businessId: string) {
     return this.restoreProfessionalUseCase.execute(id, businessId);
+  }
+
+  @RequiredPermissions("patient-update")
+  @Patch(":id/patient")
+  updatePatient(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() updatePatientDto: UpdatePatientDto,
+    @BusinessId() businessId: string,
+  ) {
+    return this.updatePatientUseCase.execute(id, businessId, updatePatientDto);
   }
 
   @RequiredPermissions("professional-update")
