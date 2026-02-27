@@ -243,7 +243,6 @@ export class UsersService {
 
   // Find by role
   async findProfessionalWithProfile(id: string, businessId: string): Promise<ApiResponse<User>> {
-    console.log("findProfessionalWithProfile");
     const professional = await this.userRepository
       .createQueryBuilder("user")
       .leftJoinAndSelect("user.role", "role")
