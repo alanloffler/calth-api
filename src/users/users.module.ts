@@ -12,6 +12,7 @@ import { RestoreProfessionalUseCase } from "@users/use-cases/professional/restor
 import { Role } from "@roles/entities/role.entity";
 import { SoftRemovePatientUserCase } from "@users/use-cases/patient/soft-remove-patient.use-case";
 import { SoftRemoveProfessionalUserCase } from "@users/use-cases/professional/soft-remove-professional.use-case";
+import { UpdatePatientUseCase } from "@users/use-cases/professional/update-patient.use-case";
 import { UpdateProfessionalUseCase } from "@users/use-cases/professional/update-professional.use-case";
 import { User } from "@users/entities/user.entity";
 import { UsersController } from "@users/users.controller";
@@ -31,6 +32,7 @@ import { UsersService } from "@users/users.service";
     RestoreProfessionalUseCase,
     SoftRemovePatientUserCase,
     SoftRemoveProfessionalUserCase,
+    UpdatePatientUseCase,
     UpdateProfessionalUseCase,
     UsersService,
   ],
