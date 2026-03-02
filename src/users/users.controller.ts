@@ -160,6 +160,8 @@ export class UsersController {
   findProfessionalSoftRemovedWithProfile(@BusinessId(ParseUUIDPipe) businessId: string, @Param("id") id: string) {
     return this.usersService.findProfessionalSoftRemovedWithProfile(businessId, id);
   }
+
+  // FE: used on Calendar and Professional combobox
   @RequiredPermissions("professional-view")
   @Get(":id/professional/profile")
   findProfessionalWithProfile(@Param("id") id: string, @BusinessId(ParseUUIDPipe) businessId: string) {
