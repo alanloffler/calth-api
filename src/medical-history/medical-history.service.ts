@@ -47,27 +47,49 @@ export class MedicalHistoryService {
   }
 
   async findAllByPatientRemoved(businessId: string, userId: string): Promise<ApiResponse<MedicalHistory[]>> {
-    // TODO: check businessId & userId???
-    // TODO: user & event relation if needed
-    const histories = await this.medicalHistoryRepository.find({
-      where: { businessId, userId },
-      order: { date: "DESC" },
-      relations: ["user", "professional", "professional.professionalProfile"],
-      withDeleted: true,
-    });
+    const histories = await this.medicalHistoryRepository
+      .createQueryBuilder("mh")
+      .leftJoin("mh.user", "user")
+      .leftJoin("mh.professional", "professional")
+      .leftJoin("professional.professionalProfile", "pp")
+      .select([
+        "mh",
+        "user.ic",
+        "user.firstName",
+        "user.lastName",
+        "professional.firstName",
+        "professional.lastName",
+        "pp.professionalPrefix",
+      ])
+      .withDeleted()
+      .where("mh.businessId = :businessId", { businessId })
+      .andWhere("mh.userId = :userId", { userId })
+      .orderBy("mh.date", "DESC")
+      .getMany();
     if (!histories) throw new HttpException("Error al obtener el historial médico", HttpStatus.NOT_FOUND);
 
     return ApiResponse.success<MedicalHistory[]>("Historial médico encontrado", histories);
   }
 
   async findAllByPatient(businessId: string, userId: string): Promise<ApiResponse<MedicalHistory[]>> {
-    // TODO: check businessId & userId???
-    // TODO: user & event relation if needed
-    const histories = await this.medicalHistoryRepository.find({
-      where: { businessId, userId },
-      order: { date: "DESC" },
-      relations: ["user", "professional"],
-    });
+    const histories = await this.medicalHistoryRepository
+      .createQueryBuilder("mh")
+      .leftJoin("mh.user", "user")
+      .leftJoin("mh.professional", "professional")
+      .leftJoin("professional.professionalProfile", "pp")
+      .select([
+        "mh",
+        "user.ic",
+        "user.firstName",
+        "user.lastName",
+        "professional.firstName",
+        "professional.lastName",
+        "pp.professionalPrefix",
+      ])
+      .where("mh.businessId = :businessId", { businessId })
+      .andWhere("mh.userId = :userId", { userId })
+      .orderBy("mh.date", "DESC")
+      .getMany();
     if (!histories) throw new HttpException("Error al obtener el historial médico", HttpStatus.NOT_FOUND);
 
     return ApiResponse.success<MedicalHistory[]>("Historial médico encontrado", histories);
