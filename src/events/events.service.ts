@@ -165,6 +165,29 @@ export class EventsService {
     return ApiResponse.success<string[]>(`Turnos encontrados para ${date}`, dates);
   }
 
+  async findByBusinessProfessionalPatient(
+    businessId: string,
+    patientId: string,
+    professionalId?: string,
+  ): Promise<ApiResponse<Event[]>> {
+    const events = await this.eventRepository
+      .createQueryBuilder("e")
+      .leftJoinAndSelect("e.user", "u")
+      .leftJoinAndSelect("u.role", "ur")
+      .leftJoinAndSelect("e.professional", "p")
+      .leftJoinAndSelect("p.professionalProfile", "pp")
+      .where("e.business_id = :businessId", { businessId })
+      .andWhere("e.professional_id = :professionalId", { professionalId })
+      .andWhere("e.user_id = :patientId", { patientId })
+      .andWhere("e.deleted_at IS NULL")
+      .orderBy("e.start_date", "DESC")
+      .addOrderBy("e.end_date", "DESC")
+      .getMany();
+    if (!events) throw new HttpException("Error al obtener los turnos", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<Event[]>("Turnos encontrados", events);
+  }
+
   async findOne(id: string, businessId: string): Promise<ApiResponse<Event>> {
     const event = await this.findOneById(id, businessId);
     if (!event) throw new HttpException("Turno no encontrado", HttpStatus.NOT_FOUND);
