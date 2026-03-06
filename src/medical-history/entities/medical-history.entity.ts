@@ -31,7 +31,7 @@ export class MedicalHistory {
   @JoinColumn({ name: "user_id" })
   user: User;
 
-  @Column({ name: "professional_id", type: "uuid", nullable: true })
+  @Column({ name: "professional_id", type: "uuid", nullable: false })
   professionalId: string;
 
   @ManyToOne(() => User, { onDelete: "SET NULL" })
