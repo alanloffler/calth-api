@@ -52,6 +52,16 @@ export class EventsController {
   }
 
   @RequiredPermissions("events-view")
+  @Get("patient/:patientId")
+  findAllByPatient(
+    @BusinessId(ParseUUIDPipe) businessId: string,
+    @Param("patientId", ParseUUIDPipe) patientId: string,
+    @Query("professional", ParseUUIDPipe) professionalId: string,
+  ) {
+    return this.eventsService.findByBusinessProfessionalPatient(businessId, patientId, professionalId);
+  }
+
+  @RequiredPermissions("events-view")
   @Get("business")
   findAllByBusiness(@BusinessId(ParseUUIDPipe) businessId: string, @Query("limit") limit: string) {
     return this.eventsService.findAllByBusiness(businessId, limit);
