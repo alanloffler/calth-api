@@ -189,7 +189,18 @@ export class EventsService {
   }
 
   async findOne(id: string, businessId: string): Promise<ApiResponse<Event>> {
-    const event = await this.findOneById(id, businessId);
+    const event = await this.eventRepository
+      .createQueryBuilder("e")
+      .leftJoinAndSelect("e.user", "u")
+      .leftJoinAndSelect("u.role", "ur")
+      .leftJoinAndSelect("e.professional", "p")
+      .leftJoinAndSelect("p.professionalProfile", "pp")
+      .where("e.business_id = :businessId", { businessId })
+      .andWhere("e.id = :id", { id })
+      .andWhere("e.deleted_at IS NULL")
+      .orderBy("e.start_date", "DESC")
+      .addOrderBy("e.end_date", "DESC")
+      .getOne();
     if (!event) throw new HttpException("Turno no encontrado", HttpStatus.NOT_FOUND);
 
     return ApiResponse.success<Event>("Turno encontrado", event);
