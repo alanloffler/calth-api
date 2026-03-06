@@ -23,12 +23,6 @@ export class MedicalHistoryService {
     const { eventId, ...rest } = createMedicalHistoryDto;
     const createDto = { ...rest, businessId, ...(eventId && { eventId }) };
 
-    if (eventId) {
-      console.log("there's eventId, then check existence");
-    } else {
-      console.log("there's no eventId");
-    }
-
     const history = this.medicalHistoryRepository.create(createDto);
     const saveHistory = await this.medicalHistoryRepository.save(history);
     if (!saveHistory) throw new HttpException("Error al crear el la historia médica", HttpStatus.BAD_REQUEST);
