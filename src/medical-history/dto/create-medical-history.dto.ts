@@ -10,6 +10,10 @@ export class CreateMedicalHistoryDto {
   @IsNotEmpty({ message: "El id del negocio es obligatorio" })
   businessId: string;
 
+  @IsUUID(4, { message: "El id del profesional debe ser un UUID" })
+  @IsNotEmpty()
+  professionalId: string;
+
   @IsUUID(4, { message: "El id del turno debe ser un UUID" })
   @IsOptional()
   eventId?: string;
