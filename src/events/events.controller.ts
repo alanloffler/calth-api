@@ -68,6 +68,19 @@ export class EventsController {
   }
 
   @RequiredPermissions("events-view")
+  @Get("filtered")
+  findEventsFiltered(
+    @BusinessId(ParseUUIDPipe) businessId: string,
+    @Query("limit") limit: string,
+    @Query("date") date?: string,
+    @Query("patientId") patientId?: string,
+    @Query("professionalId") professionalId?: string,
+    @Query("status") status?: string,
+  ) {
+    return this.eventsService.findEventsFiltered(businessId, limit, date, patientId, professionalId, status);
+  }
+
+  @RequiredPermissions("events-view")
   @Get(":id")
   findOne(@Param("id", ParseUUIDPipe) id: string, @BusinessId(ParseUUIDPipe) businessId: string) {
     return this.eventsService.findOne(id, businessId);
