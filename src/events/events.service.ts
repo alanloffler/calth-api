@@ -67,7 +67,6 @@ export class EventsService {
     return ApiResponse.success<Event[]>("Turnos encontrados", events);
   }
 
-  // TODO: use query params to filter events
   async findEventsFiltered(
     businessId: string,
     limit: string,
@@ -79,7 +78,7 @@ export class EventsService {
     const queryLimit = limit ? parseInt(limit) : 10;
     console.log(date, patientId, professionalId, status);
 
-    const events = await this.eventRepository
+    const qb = this.eventRepository
       .createQueryBuilder("event")
       .where("event.businessId = :businessId", { businessId })
       .leftJoin("event.user", "user")
@@ -88,10 +87,25 @@ export class EventsService {
       .leftJoin("professional.professionalProfile", "professionalProfile")
       .select(["event", ...EVENT_USER_SELECT, ...EVENT_ROLE_SELECT, ...EVENT_PROF_SELECT, ...EVENT_PROF_PROFILE_SELECT])
       .orderBy("event.start_date::date", "DESC")
-      .addOrderBy("event.start_date::time", "ASC")
-      .limit(queryLimit)
-      .getMany();
+      .addOrderBy("event.start_date::time", "ASC");
 
+    if (date) {
+      qb.andWhere("event.startDate >= :startOfDay AND event.startDate <= :endOfDay", {
+        startOfDay: `${date} 00:00:00${this.TIME_ZONE}`,
+        endOfDay: `${date} 23:59:59${this.TIME_ZONE}`,
+      });
+    }
+    if (patientId) {
+      qb.andWhere("user.id = :patientId", { patientId });
+    }
+    if (professionalId) {
+      qb.andWhere("professional.id = :professionalId", { professionalId });
+    }
+    if (status) {
+      qb.andWhere("event.status = :status", { status });
+    }
+
+    const events = await qb.limit(queryLimit).getMany();
     if (!events) throw new HttpException("Error al obtener los turnos", HttpStatus.NOT_FOUND);
 
     return ApiResponse.success<Event[]>("Turnos encontrados", events);
