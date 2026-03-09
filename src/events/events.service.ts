@@ -67,6 +67,36 @@ export class EventsService {
     return ApiResponse.success<Event[]>("Turnos encontrados", events);
   }
 
+  // TODO: use query params to filter events
+  async findEventsFiltered(
+    businessId: string,
+    limit: string,
+    date?: string,
+    patientId?: string,
+    professionalId?: string,
+    status?: string,
+  ): Promise<ApiResponse<Event[]>> {
+    const queryLimit = limit ? parseInt(limit) : 10;
+    console.log(date, patientId, professionalId, status);
+
+    const events = await this.eventRepository
+      .createQueryBuilder("event")
+      .where("event.businessId = :businessId", { businessId })
+      .leftJoin("event.user", "user")
+      .leftJoin("user.role", "userRole")
+      .leftJoin("event.professional", "professional")
+      .leftJoin("professional.professionalProfile", "professionalProfile")
+      .select(["event", ...EVENT_USER_SELECT, ...EVENT_ROLE_SELECT, ...EVENT_PROF_SELECT, ...EVENT_PROF_PROFILE_SELECT])
+      .orderBy("event.start_date::date", "DESC")
+      .addOrderBy("event.start_date::time", "ASC")
+      .limit(queryLimit)
+      .getMany();
+
+    if (!events) throw new HttpException("Error al obtener los turnos", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<Event[]>("Turnos encontrados", events);
+  }
+
   async findAll(businessId: string, professionalId: string): Promise<ApiResponse<Event[]>> {
     const events = await this.eventRepository
       .createQueryBuilder("event")
