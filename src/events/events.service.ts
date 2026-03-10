@@ -76,7 +76,6 @@ export class EventsService {
     status?: string,
   ): Promise<ApiResponse<Event[]>> {
     const queryLimit = limit ? parseInt(limit) : 10;
-    console.log(date, patientId, professionalId, status);
 
     const qb = this.eventRepository
       .createQueryBuilder("event")
