@@ -67,6 +67,8 @@ export class EventsService {
     return ApiResponse.success<Event[]>("Turnos encontrados", events);
   }
 
+  // TODO: implement returning data { data: the events, total: count of total paginated items}
+  // TODO: implement pageIndex and limit for pagination
   async findEventsFiltered(
     businessId: string,
     limit: string,
