@@ -115,7 +115,8 @@ export class EventsService {
     if (!events) throw new HttpException("Error al obtener los turnos", HttpStatus.NOT_FOUND);
 
     const total = await baseQb.getCount();
-    if (!total) throw new HttpException("Error al obtener el total de los turnos", HttpStatus.NOT_FOUND);
+    if (total === null || total === undefined)
+      throw new HttpException("Error al obtener los turnos", HttpStatus.NOT_FOUND);
 
     const response: IPaginationResponse<Event> = {
       result: events,
