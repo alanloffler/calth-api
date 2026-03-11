@@ -73,11 +73,12 @@ export class EventsController {
     @BusinessId(ParseUUIDPipe) businessId: string,
     @Query("limit") limit: string,
     @Query("date") date?: string,
+    @Query("page") page?: string,
     @Query("patientId") patientId?: string,
     @Query("professionalId") professionalId?: string,
     @Query("status") status?: string,
   ) {
-    return this.eventsService.findEventsFiltered(businessId, limit, date, patientId, professionalId, status);
+    return this.eventsService.findEventsFiltered(businessId, limit, date, page, patientId, professionalId, status);
   }
 
   @RequiredPermissions("events-view")
