@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { LessThan, MoreThan, Not, Repository } from "typeorm";
 
+import type { IPaginationResponse } from "@events/interfaces/pagination-response.interface";
 import { ApiResponse } from "@common/helpers/api-response.helper";
 import { BusinessService } from "@business/business.service";
 import { CreateEventDto } from "@events/dto/create-event.dto";
@@ -67,19 +68,23 @@ export class EventsService {
     return ApiResponse.success<Event[]>("Turnos encontrados", events);
   }
 
-  // TODO: implement returning data { data: the events, total: count of total paginated items}
-  // TODO: implement pageIndex and limit for pagination
   async findEventsFiltered(
     businessId: string,
     limit: string,
     date?: string,
+    page?: string,
     patientId?: string,
     professionalId?: string,
     status?: string,
-  ): Promise<ApiResponse<Event[]>> {
-    const queryLimit = limit ? parseInt(limit) : 10;
+  ): Promise<ApiResponse<IPaginationResponse<Event>>> {
+    let queryLimit = limit ? parseInt(limit, 10) : 10;
+    if (!queryLimit || queryLimit <= 0) queryLimit = 10;
 
-    const qb = this.eventRepository
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const currentPage = pageNum > 0 ? pageNum : 1;
+    const offset = (currentPage - 1) * queryLimit;
+
+    const baseQb = this.eventRepository
       .createQueryBuilder("event")
       .where("event.businessId = :businessId", { businessId })
       .leftJoin("event.user", "user")
@@ -91,25 +96,33 @@ export class EventsService {
       .addOrderBy("event.start_date::time", "ASC");
 
     if (date) {
-      qb.andWhere("event.startDate >= :startOfDay AND event.startDate <= :endOfDay", {
+      baseQb.andWhere("event.startDate >= :startOfDay AND event.startDate <= :endOfDay", {
         startOfDay: `${date} 00:00:00${this.TIME_ZONE}`,
         endOfDay: `${date} 23:59:59${this.TIME_ZONE}`,
       });
     }
     if (patientId) {
-      qb.andWhere("user.id = :patientId", { patientId });
+      baseQb.andWhere("user.id = :patientId", { patientId });
     }
     if (professionalId) {
-      qb.andWhere("professional.id = :professionalId", { professionalId });
+      baseQb.andWhere("professional.id = :professionalId", { professionalId });
     }
     if (status) {
-      qb.andWhere("event.status = :status", { status });
+      baseQb.andWhere("event.status = :status", { status });
     }
 
-    const events = await qb.limit(queryLimit).getMany();
+    const events = await baseQb.clone().limit(queryLimit).offset(offset).getMany();
     if (!events) throw new HttpException("Error al obtener los turnos", HttpStatus.NOT_FOUND);
 
-    return ApiResponse.success<Event[]>("Turnos encontrados", events);
+    const total = await baseQb.getCount();
+    if (!total) throw new HttpException("Error al obtener el total de los turnos", HttpStatus.NOT_FOUND);
+
+    const response: IPaginationResponse<Event> = {
+      result: events,
+      total: total,
+    };
+
+    return ApiResponse.success<IPaginationResponse<Event>>("Turnos encontrados", response);
   }
 
   async findAll(businessId: string, professionalId: string): Promise<ApiResponse<Event[]>> {
