@@ -77,8 +77,20 @@ export class EventsController {
     @Query("patientId") patientId?: string,
     @Query("professionalId") professionalId?: string,
     @Query("status") status?: string,
+    @Query("sortBy") sortBy?: string,
+    @Query("sortOrder") sortOrder?: string,
   ) {
-    return this.eventsService.findEventsFiltered(businessId, limit, date, page, patientId, professionalId, status);
+    return this.eventsService.findEventsFiltered(
+      businessId,
+      limit,
+      date,
+      page,
+      patientId,
+      professionalId,
+      status,
+      sortBy,
+      sortOrder,
+    );
   }
 
   @RequiredPermissions("events-view")
