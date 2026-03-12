@@ -76,7 +76,12 @@ export class EventsService {
     patientId?: string,
     professionalId?: string,
     status?: string,
+    sortBy?: string,
+    sortOrder?: string,
   ): Promise<ApiResponse<IPaginationResponse<Event>>> {
+    const sortByValue = sortBy ? sortBy : "start_date";
+    const sortOrderValue = sortOrder === "asc" ? "ASC" : "DESC";
+
     let queryLimit = limit ? parseInt(limit, 10) : 10;
     if (!queryLimit || queryLimit <= 0) queryLimit = 10;
 
@@ -91,9 +96,13 @@ export class EventsService {
       .leftJoin("user.role", "userRole")
       .leftJoin("event.professional", "professional")
       .leftJoin("professional.professionalProfile", "professionalProfile")
-      .select(["event", ...EVENT_USER_SELECT, ...EVENT_ROLE_SELECT, ...EVENT_PROF_SELECT, ...EVENT_PROF_PROFILE_SELECT])
-      .orderBy("event.start_date::date", "DESC")
-      .addOrderBy("event.start_date::time", "ASC");
+      .select([
+        "event",
+        ...EVENT_USER_SELECT,
+        ...EVENT_ROLE_SELECT,
+        ...EVENT_PROF_SELECT,
+        ...EVENT_PROF_PROFILE_SELECT,
+      ]);
 
     if (date) {
       baseQb.andWhere("event.startDate >= :startOfDay AND event.startDate <= :endOfDay", {
@@ -109,6 +118,33 @@ export class EventsService {
     }
     if (status) {
       baseQb.andWhere("event.status = :status", { status });
+    }
+
+    let sortKey: string;
+
+    switch (sortBy) {
+      case "startDate":
+        sortKey = "start_date";
+        break;
+      case "user_firstName":
+        sortKey = "user.first_name";
+        break;
+      case "professional_firstName":
+        sortKey = "professional.first_name";
+        break;
+      default:
+        sortKey = "start_date";
+    }
+
+    if (sortBy && sortOrder && sortBy !== "startDate") {
+      if (sortKey.includes("user") || sortKey.includes("professional")) {
+        baseQb.orderBy(`${sortKey}`, sortOrderValue);
+      } else {
+        baseQb.orderBy(`event.${sortBy}`, sortOrderValue);
+      }
+    } else {
+      const dateOrder = sortBy === "startDate" ? sortOrderValue : "DESC";
+      baseQb.orderBy("event.start_date::date", dateOrder).addOrderBy("event.start_date::time", "ASC");
     }
 
     const events = await baseQb.clone().limit(queryLimit).offset(offset).getMany();
