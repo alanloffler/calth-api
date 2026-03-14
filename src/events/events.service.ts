@@ -47,6 +47,41 @@ export class EventsService {
     }
   }
 
+  async findUnavailableDays(
+    businessId: string,
+    professionalId: string,
+    fromDate?: string,
+    toDate?: string,
+  ): Promise<ApiResponse<Record<number, boolean>>> {
+    if (!fromDate || !toDate || fromDate === "" || toDate === "") {
+      throw new HttpException("Fecha de inicio y fin son requeridas", HttpStatus.BAD_REQUEST);
+    }
+
+    const events = await this.eventRepository
+      .createQueryBuilder("event")
+      .where("event.businessId = :businessId", { businessId })
+      .andWhere("event.professionalId = :professionalId", { professionalId })
+      .andWhere("event.start_date >= :fromDate", { fromDate: `${fromDate} 00:00:00${this.TIME_ZONE}` })
+      .andWhere("event.start_date <= :toDate", { toDate: `${toDate} 23:59:59${this.TIME_ZONE}` })
+      .select(["event.startDate"])
+      .getMany();
+
+    const offsetMs = parseInt(this.TIME_ZONE, 10) * 60 * 60 * 1000;
+    const daysWithEvents = new Set(
+      events.map((event) => new Date(event.startDate.getTime() + offsetMs).getDate()),
+    );
+
+    const result: Record<number, boolean> = {};
+    const start = new Date(`${fromDate}T00:00:00`);
+    const end = new Date(`${toDate}T00:00:00`);
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      result[d.getDate()] = daysWithEvents.has(d.getDate());
+    }
+
+    return ApiResponse.success<Record<number, boolean>>("Días ocupados", result);
+  }
+
   async findAllByBusiness(businessId: string, limit: string): Promise<ApiResponse<Event[]>> {
     const queryLimit = limit ? parseInt(limit) : 10;
 
