@@ -21,14 +21,14 @@ export class EventsController {
   }
 
   @RequiredPermissions("events-view")
-  @Get("unavailable/:professionalId")
-  findUnavailableDays(
+  @Get("days-with-events/:professionalId")
+  findDaysWithEvents(
     @BusinessId(ParseUUIDPipe) businessId: string,
     @Param("professionalId", ParseUUIDPipe) professionalId: string,
     @Query("fromDate") fromDate?: string,
     @Query("toDate") toDate?: string,
   ) {
-    return this.eventsService.findUnavailableDays(businessId, professionalId, fromDate, toDate);
+    return this.eventsService.findDaysWithEvents(businessId, professionalId, fromDate, toDate);
   }
 
   // Maybe remove and use only with data,
