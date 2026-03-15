@@ -53,7 +53,7 @@ export class EventsService {
     fromDate?: string,
     toDate?: string,
   ): Promise<ApiResponse<Record<number, boolean>>> {
-    if (!fromDate || !toDate || fromDate === "" || toDate === "") {
+    if (!fromDate || !toDate) {
       throw new HttpException("Fecha de inicio y fin son requeridas", HttpStatus.BAD_REQUEST);
     }
 
