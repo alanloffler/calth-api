@@ -47,7 +47,7 @@ export class EventsService {
     }
   }
 
-  async findUnavailableDays(
+  async findDaysWithEvents(
     businessId: string,
     professionalId: string,
     fromDate?: string,
@@ -67,9 +67,7 @@ export class EventsService {
       .getMany();
 
     const offsetMs = parseInt(this.TIME_ZONE, 10) * 60 * 60 * 1000;
-    const daysWithEvents = new Set(
-      events.map((event) => new Date(event.startDate.getTime() + offsetMs).getDate()),
-    );
+    const daysWithEvents = new Set(events.map((event) => new Date(event.startDate.getTime() + offsetMs).getDate()));
 
     const result: Record<number, boolean> = {};
     const start = new Date(`${fromDate}T00:00:00`);
