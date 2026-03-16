@@ -195,18 +195,6 @@ export class EventsService {
     return ApiResponse.success<IPaginationResponse<Event>>("Turnos encontrados", response);
   }
 
-  private toLocalDateString(utcDate: Date): string {
-    const offset = parseInt(this.TIME_ZONE, 10) * 60 * 60 * 1000;
-    const localTime = new Date(utcDate.getTime() + offset);
-    const year = localTime.getUTCFullYear();
-    const month = String(localTime.getUTCMonth() + 1).padStart(2, "0");
-    const day = String(localTime.getUTCDate()).padStart(2, "0");
-    const hours = String(localTime.getUTCHours()).padStart(2, "0");
-    const minutes = String(localTime.getUTCMinutes()).padStart(2, "0");
-    const seconds = String(localTime.getUTCSeconds()).padStart(2, "0");
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}${this.TIME_ZONE}`;
-  }
-
   async findAll(
     businessId: string,
     professionalId: string,
@@ -242,12 +230,12 @@ export class EventsService {
       ]);
 
     if (startDate && endDate) {
-      query.andWhere("event.startDate <= :endDate", { endDate: this.toLocalDateString(new Date(endDate)) });
-      query.andWhere("event.endDate >= :startDate", { startDate: this.toLocalDateString(new Date(startDate)) });
+      query.andWhere("event.startDate <= :endDate", { endDate });
+      query.andWhere("event.endDate >= :startDate", { startDate });
     } else if (startDate) {
-      query.andWhere("event.endDate >= :startDate", { startDate: this.toLocalDateString(new Date(startDate)) });
+      query.andWhere("event.endDate >= :startDate", { startDate });
     } else if (endDate) {
-      query.andWhere("event.startDate <= :endDate", { endDate: this.toLocalDateString(new Date(endDate)) });
+      query.andWhere("event.startDate <= :endDate", { endDate });
     }
 
     const events = await query.getMany();
