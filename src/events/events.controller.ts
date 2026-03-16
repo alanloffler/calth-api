@@ -32,14 +32,15 @@ export class EventsController {
   }
 
   // Maybe remove and use only with data,
-  // defaults to no date and get all
   @RequiredPermissions("events-view")
   @Get("professional/:professionalId")
   findAll(
     @BusinessId(ParseUUIDPipe) businessId: string,
     @Param("professionalId", ParseUUIDPipe) professionalId: string,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
   ) {
-    return this.eventsService.findAll(businessId, professionalId);
+    return this.eventsService.findAll(businessId, professionalId, startDate, endDate);
   }
 
   @RequiredPermissions("events-view")
