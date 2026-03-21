@@ -415,6 +415,10 @@ export class EventsService {
       .andWhere("event.startDate IN (:...dates)", { dates: datesISO })
       .getMany();
 
+    if (!existing) {
+      throw new HttpException("Error buscando turnos para la recurrencia", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     const occupiedSet = new Set(existing.map((e) => e.startDate.toISOString()));
 
     const result = _recurringDays.map((date) => ({
