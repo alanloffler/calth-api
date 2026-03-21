@@ -398,6 +398,34 @@ export class EventsService {
     return ApiResponse.removed<Event>("Turno eliminado", result);
   }
 
+  async checkRecurring(
+    businessId: string,
+    professionalId: string,
+    startDate: string,
+    days: string,
+  ): Promise<ApiResponse<{ date: Date; available: boolean }[]>> {
+    console.log(businessId, startDate, days);
+    const date = new Date(startDate);
+    const _recurringDays = this.generateRecurringDates(date, Number(days));
+    const datesISO = _recurringDays.map((d) => d.toISOString());
+
+    const existing = await this.eventRepository
+      .createQueryBuilder("event")
+      .where("event.businessId = :businessId", { businessId })
+      .andWhere("event.professionalId = :professionalId", { professionalId })
+      .andWhere("event.startDate IN (:...dates)", { dates: datesISO })
+      .getMany();
+
+    const occupiedSet = new Set(existing.map((e) => e.startDate.toISOString()));
+
+    const result = _recurringDays.map((date) => ({
+      date: date,
+      available: !occupiedSet.has(date.toISOString()),
+    }));
+
+    return ApiResponse.success<{ date: Date; available: boolean }[]>("Recurrencia verificada", result);
+  }
+
   // Private methods
   private async findOneById(id: string, businessId: string): Promise<Event> {
     const event = await this.eventRepository
@@ -468,5 +496,17 @@ export class EventsService {
     });
 
     return !overlappingEvent;
+  }
+
+  private generateRecurringDates(startDate: Date, amount: number): Date[] {
+    const dates: Date[] = [];
+
+    for (let i = 0; i < amount; i++) {
+      const date = new Date(startDate.getTime());
+      date.setUTCDate(date.getUTCDate() + i * 7);
+      dates.push(date);
+    }
+
+    return dates;
   }
 }
