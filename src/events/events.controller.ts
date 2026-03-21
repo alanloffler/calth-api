@@ -73,6 +73,17 @@ export class EventsController {
     return this.eventsService.findByBusinessProfessionalPatient(businessId, patientId, professionalId);
   }
 
+  @RequiredPermissions("events-create")
+  @Get("check-recurring")
+  checkRecurring(
+    @BusinessId(ParseUUIDPipe) businessId: string,
+    @Query("professionalId", ParseUUIDPipe) professionalId: string,
+    @Query("startDate") startDate: string,
+    @Query("days") days: string,
+  ) {
+    return this.eventsService.checkRecurring(businessId, professionalId, startDate, days);
+  }
+
   @RequiredPermissions("events-view")
   @Get("business")
   findAllByBusiness(@BusinessId(ParseUUIDPipe) businessId: string, @Query("limit") limit: string) {
