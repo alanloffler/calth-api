@@ -404,7 +404,6 @@ export class EventsService {
     startDate: string,
     days: string,
   ): Promise<ApiResponse<{ date: Date; available: boolean }[]>> {
-    console.log(businessId, startDate, days);
     const date = new Date(startDate);
     const _recurringDays = this.generateRecurringDates(date, Number(days));
     const datesISO = _recurringDays.map((d) => d.toISOString());
