@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { LessThan, MoreThan, Not, Repository } from "typeorm";
+import { DataSource, LessThan, MoreThan, Not, Repository } from "typeorm";
 
 import type { IPaginationResponse } from "@events/interfaces/pagination-response.interface";
 import { ApiResponse } from "@common/helpers/api-response.helper";
@@ -25,12 +25,20 @@ export class EventsService {
     @InjectRepository(Event) private readonly eventRepository: Repository<Event>,
     private readonly businessService: BusinessService,
     private readonly usersService: UsersService,
+    private readonly dataSource: DataSource,
   ) {}
 
-  async create(createEventDto: CreateEventDto, businessId: string): Promise<ApiResponse<Event>> {
+  async create(createEventDto: CreateEventDto, businessId: string): Promise<ApiResponse<Event | Event[]>> {
     await this.checkBusiness(businessId);
     await this.checkProfessional(createEventDto.professionalId, businessId);
     await this.checkPatient(createEventDto.userId, businessId);
+
+    if (createEventDto.recurringDates?.length) {
+      if (!createEventDto.startDate) {
+        throw new HttpException("La fecha de inicio es obligatoria para turnos recurrentes", HttpStatus.BAD_REQUEST);
+      }
+      return this.createRecurring(createEventDto as CreateEventDto & { startDate: Date; recurringDates: Date[] }, businessId);
+    }
 
     const fullDto = { ...createEventDto, businessId };
     const newEvent = this.eventRepository.create(fullDto);
@@ -44,6 +52,40 @@ export class EventsService {
       }
 
       throw new HttpException("Error al crear el turno", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private async createRecurring(
+    createEventDto: CreateEventDto & { startDate: Date; recurringDates: Date[] },
+    businessId: string,
+  ): Promise<ApiResponse<Event[]>> {
+    const duration = createEventDto.endDate.getTime() - createEventDto.startDate.getTime();
+
+    try {
+      const savedEvents = await this.dataSource.transaction(async (manager) => {
+        const events: Event[] = [];
+
+        for (const startDate of createEventDto.recurringDates) {
+          const endDate = new Date(startDate.getTime() + duration);
+          const event = manager.create(Event, {
+            ...createEventDto,
+            businessId,
+            startDate,
+            endDate,
+          });
+          events.push(await manager.save(event));
+        }
+
+        return events;
+      });
+
+      return ApiResponse.created<Event[]>("Turnos recurrentes creados", savedEvents);
+    } catch (error: any) {
+      if (error?.driverError?.code === "23505") {
+        throw new HttpException("Uno o más horarios ya están tomados", HttpStatus.CONFLICT);
+      }
+
+      throw new HttpException("Error al crear los turnos recurrentes", HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
