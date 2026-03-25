@@ -1,8 +1,9 @@
 import cookieParser from "cookie-parser";
+import path from "path";
 import { BadRequestException, ClassSerializerInterceptor, ValidationError, ValidationPipe } from "@nestjs/common";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import { NestFactory, Reflector } from "@nestjs/core";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 
 import { AppModule } from "@/app.module";
 import { flattenErrors } from "@common/validators/flatten-errors.validator";
@@ -14,10 +15,18 @@ async function bootstrap() {
   let httpsOptions: { key: Buffer; cert: Buffer } | undefined = undefined;
 
   if (isDev) {
-    httpsOptions = {
-      key: readFileSync("/Users/alan/.certs/localhost-key.pem"),
-      cert: readFileSync("/Users/alan/.certs/localhost.pem"),
-    };
+    const certPath = path.resolve(__dirname, "../../../certs");
+    const keyPath = path.join(certPath, "localhost-key.pem");
+    const certFilePath = path.join(certPath, "localhost.pem");
+
+    if (existsSync(keyPath) && existsSync(certFilePath)) {
+      httpsOptions = {
+        key: readFileSync(keyPath),
+        cert: readFileSync(certFilePath),
+      };
+    } else {
+      console.warn("Certificate files not found. Running in non-secure mode.");
+    }
   }
 
   const PORT: number = parseInt(process.env.PORT ?? "3000");
