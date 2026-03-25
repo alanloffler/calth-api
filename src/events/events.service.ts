@@ -40,6 +40,19 @@ export class EventsService {
       return this.createRecurring(createEventDto as CreateEventDto & { startDate: Date; recurringDates: Date[] }, businessId);
     }
 
+    if (!createEventDto.startDate) {
+      throw new HttpException("La fecha de inicio es obligatoria", HttpStatus.BAD_REQUEST);
+    }
+
+    const isAvailable = await this.checkSlotAvailable(
+      { professionalId: createEventDto.professionalId, startDate: createEventDto.startDate, endDate: createEventDto.endDate },
+      businessId,
+    );
+
+    if (!isAvailable) {
+      throw new HttpException("El horario ya fue tomado por otro usuario", HttpStatus.CONFLICT);
+    }
+
     const fullDto = { ...createEventDto, businessId };
     const newEvent = this.eventRepository.create(fullDto);
 
@@ -67,6 +80,20 @@ export class EventsService {
 
         for (const startDate of createEventDto.recurringDates) {
           const endDate = new Date(startDate.getTime() + duration);
+
+          const overlapping = await manager.findOne(Event, {
+            where: {
+              businessId,
+              professionalId: createEventDto.professionalId,
+              startDate: LessThan(endDate),
+              endDate: MoreThan(startDate),
+            },
+          });
+
+          if (overlapping) {
+            throw new HttpException("Uno o más horarios ya están tomados", HttpStatus.CONFLICT);
+          }
+
           const event = manager.create(Event, {
             ...createEventDto,
             businessId,
