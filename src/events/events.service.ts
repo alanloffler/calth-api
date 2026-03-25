@@ -1,6 +1,7 @@
+import { DataSource, LessThan, MoreThan, Not, Repository } from "typeorm";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, LessThan, MoreThan, Not, Repository } from "typeorm";
+import { randomUUID } from "crypto";
 
 import type { IPaginationResponse } from "@events/interfaces/pagination-response.interface";
 import { ApiResponse } from "@common/helpers/api-response.helper";
@@ -37,7 +38,10 @@ export class EventsService {
       if (!createEventDto.startDate) {
         throw new HttpException("La fecha de inicio es obligatoria para turnos recurrentes", HttpStatus.BAD_REQUEST);
       }
-      return this.createRecurring(createEventDto as CreateEventDto & { startDate: Date; recurringDates: Date[] }, businessId);
+      return this.createRecurring(
+        createEventDto as CreateEventDto & { startDate: Date; recurringDates: Date[] },
+        businessId,
+      );
     }
 
     if (!createEventDto.startDate) {
@@ -45,7 +49,11 @@ export class EventsService {
     }
 
     const isAvailable = await this.checkSlotAvailable(
-      { professionalId: createEventDto.professionalId, startDate: createEventDto.startDate, endDate: createEventDto.endDate },
+      {
+        professionalId: createEventDto.professionalId,
+        startDate: createEventDto.startDate,
+        endDate: createEventDto.endDate,
+      },
       businessId,
     );
 
@@ -73,6 +81,7 @@ export class EventsService {
     businessId: string,
   ): Promise<ApiResponse<Event[]>> {
     const duration = createEventDto.endDate.getTime() - createEventDto.startDate.getTime();
+    const recurrentId = randomUUID();
 
     try {
       const savedEvents = await this.dataSource.transaction(async (manager) => {
@@ -99,6 +108,7 @@ export class EventsService {
             businessId,
             startDate,
             endDate,
+            recurrentId,
           });
           events.push(await manager.save(event));
         }
