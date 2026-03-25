@@ -50,6 +50,9 @@ export class Event {
   @Column({ type: "enum", enum: EEventStatus, nullable: false, default: EEventStatus.PENDING })
   status: EEventStatus;
 
+  @Column({ name: "recurrent_id", type: "uuid", nullable: true, default: null })
+  recurrentId: string | null;
+
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
