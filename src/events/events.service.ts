@@ -187,6 +187,7 @@ export class EventsService {
     page?: string,
     patientId?: string,
     professionalId?: string,
+    recurrent?: string,
     status?: string,
     sortBy?: string,
     sortOrder?: string,
@@ -230,6 +231,9 @@ export class EventsService {
     }
     if (status) {
       baseQb.andWhere("event.status = :status", { status });
+    }
+    if (recurrent === "true") {
+      baseQb.andWhere("event.recurrentId IS NOT NULL");
     }
 
     let sortKey: string;
