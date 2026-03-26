@@ -266,8 +266,15 @@ export class EventsService {
     if (total === null || total === undefined)
       throw new HttpException("Error al obtener los turnos", HttpStatus.NOT_FOUND);
 
+    const siblingsMap = await this.buildSiblingsMap(events);
+
+    const result = events.map((event) => ({
+      ...event,
+      siblings: event.recurrentId ? (siblingsMap.get(event.recurrentId) ?? []) : null,
+    }));
+
     const response: IPaginationResponse<Event> = {
-      result: events,
+      result,
       total: total,
     };
 
