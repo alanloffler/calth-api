@@ -192,7 +192,6 @@ export class EventsService {
     sortBy?: string,
     sortOrder?: string,
   ): Promise<ApiResponse<IPaginationResponse<Event>>> {
-    const sortByValue = sortBy ? sortBy : "start_date";
     const sortOrderValue = sortOrder === "asc" ? "ASC" : "DESC";
 
     let queryLimit = limit ? parseInt(limit, 10) : 10;
