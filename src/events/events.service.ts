@@ -320,23 +320,7 @@ export class EventsService {
     const events = await query.getMany();
     if (!events) throw new HttpException("Error al obtener los turnos", HttpStatus.NOT_FOUND);
 
-    const recurrentIds = [...new Set(events.map((e) => e.recurrentId).filter((id): id is string => id !== null))];
-    const siblingsMap = new Map<string, Event[]>();
-
-    if (recurrentIds.length > 0) {
-      const siblings = await this.eventRepository
-        .createQueryBuilder("event")
-        .where("event.recurrentId IN (:...recurrentIds)", { recurrentIds })
-        .orderBy("event.startDate", "ASC")
-        .getMany();
-
-      for (const recurrentId of recurrentIds) {
-        siblingsMap.set(
-          recurrentId,
-          siblings.filter((s) => s.recurrentId === recurrentId),
-        );
-      }
-    }
+    const siblingsMap = await this.buildSiblingsMap(events);
 
     const result = events.map((event) => ({
       ...event,
@@ -613,5 +597,26 @@ export class EventsService {
     }
 
     return dates;
+  }
+
+  private async buildSiblingsMap(events: Event[]): Promise<Map<string, Event[]>> {
+    const recurrentIds = [...new Set(events.map((e) => e.recurrentId).filter((id) => id !== null))];
+    const siblingsMap = new Map<string, Event[]>();
+    if (recurrentIds.length === 0) return siblingsMap;
+
+    const siblings = await this.eventRepository
+      .createQueryBuilder("event")
+      .where("event.recurrentId IN (:...recurrentIds)", { recurrentIds })
+      .orderBy("event.startDate", "ASC")
+      .getMany();
+
+    for (const recurrentId of recurrentIds) {
+      siblingsMap.set(
+        recurrentId,
+        siblings.filter((s) => s.recurrentId === recurrentId),
+      );
+    }
+
+    return siblingsMap;
   }
 }
