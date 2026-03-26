@@ -320,7 +320,30 @@ export class EventsService {
     const events = await query.getMany();
     if (!events) throw new HttpException("Error al obtener los turnos", HttpStatus.NOT_FOUND);
 
-    return ApiResponse.success<Event[]>("Turnos encontrados", events);
+    const recurrentIds = [...new Set(events.map((e) => e.recurrentId).filter((id): id is string => id !== null))];
+    const siblingsMap = new Map<string, Event[]>();
+
+    if (recurrentIds.length > 0) {
+      const siblings = await this.eventRepository
+        .createQueryBuilder("event")
+        .where("event.recurrentId IN (:...recurrentIds)", { recurrentIds })
+        .orderBy("event.startDate", "ASC")
+        .getMany();
+
+      for (const recurrentId of recurrentIds) {
+        siblingsMap.set(
+          recurrentId,
+          siblings.filter((s) => s.recurrentId === recurrentId),
+        );
+      }
+    }
+
+    const result = events.map((event) => ({
+      ...event,
+      siblings: event.recurrentId ? (siblingsMap.get(event.recurrentId) ?? []) : null,
+    }));
+
+    return ApiResponse.success<Event[]>("Turnos encontrados", result);
   }
 
   async findAllByDate(businessId: string, professionalId: string, date: string): Promise<ApiResponse<Event[]>> {
