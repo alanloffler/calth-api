@@ -486,12 +486,31 @@ export class EventsService {
   }
 
   async remove(id: string, businessId: string): Promise<ApiResponse<Event>> {
-    const userToRemove = await this.findOneById(id, businessId);
+    const event = await this.findOneById(id, businessId);
 
-    const result = await this.eventRepository.remove(userToRemove);
-    if (!result) throw new HttpException("Error al eliminar turno", HttpStatus.BAD_REQUEST);
+    if (!event.recurrentId) {
+      const result = await this.eventRepository.remove(event);
+      if (!result) throw new HttpException("Error al eliminar turno", HttpStatus.BAD_REQUEST);
+      return ApiResponse.removed<Event>("Turno eliminado", result);
+    }
 
-    return ApiResponse.removed<Event>("Turno eliminado", result);
+    const siblings = await this.eventRepository.find({
+      where: { recurrentId: event.recurrentId, businessId },
+      select: ["id"],
+    });
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.remove(Event, event);
+
+      if (siblings.length === 2) {
+        const remainingSibling = siblings.find((s) => s.id !== id);
+        if (remainingSibling) {
+          await manager.update(Event, { id: remainingSibling.id }, { recurrentId: null });
+        }
+      }
+    });
+
+    return ApiResponse.removed<Event>("Turno eliminado", event);
   }
 
   async checkRecurring(
