@@ -630,6 +630,50 @@ export class EventsService {
     return dates;
   }
 
+  // consume data from professional config
+  private async findSuggestion(
+    occupied: Date,
+    slotDurationMinutes: number,
+    businessId: string,
+    professionalId: string,
+  ): Promise<Date | null> {
+    const slotMs = slotDurationMinutes * 60 * 1000;
+    const maxSlotsPerDay = 16;
+    const maxDaysAhead = 7;
+
+    const isSlotFree = async (candidate: Date): Promise<boolean> => {
+      const end = new Date(candidate.getTime() + slotMs);
+      const conflict = await this.eventRepository
+        .createQueryBuilder("event")
+        .where("event.businessId = :businessId", { businessId })
+        .andWhere("event.professionalId = :professionalId", { professionalId })
+        .andWhere("event.startDate < :end AND event.endDate > :start", {
+          start: candidate.toISOString(),
+          end: end.toISOString(),
+        })
+        .getOne();
+      return conflict === null;
+    };
+
+    // 1. Try same day: scan forward then backward by 1h slots
+    for (let i = 1; i <= maxSlotsPerDay; i++) {
+      for (const direction of [1, -1]) {
+        const candidate = new Date(occupied.getTime() + direction * i * slotMs);
+        if (candidate.getUTCDate() !== occupied.getUTCDate()) continue; // stay on same day
+        if (await isSlotFree(candidate)) return candidate;
+      }
+    }
+
+    // 2. Try same hour on next days
+    for (let day = 1; day <= maxDaysAhead; day++) {
+      const candidate = new Date(occupied.getTime());
+      candidate.setUTCDate(candidate.getUTCDate() + day);
+      if (await isSlotFree(candidate)) return candidate;
+    }
+
+    return null;
+  }
+
   private async buildSiblingsMap(events: Event[]): Promise<Map<string, Event[]>> {
     const recurrentIds = [...new Set(events.map((e) => e.recurrentId).filter((id) => id !== null))];
     const siblingsMap = new Map<string, Event[]>();
