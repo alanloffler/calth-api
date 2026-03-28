@@ -4,6 +4,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { randomUUID } from "crypto";
 
 import type { IPaginationResponse } from "@events/interfaces/pagination-response.interface";
+import type { IRecurringResponse } from "@events/interfaces/recurring-response.interface";
 import { ApiResponse } from "@common/helpers/api-response.helper";
 import { BusinessService } from "@business/business.service";
 import { CreateEventDto } from "@events/dto/create-event.dto";
@@ -518,7 +519,7 @@ export class EventsService {
     professionalId: string,
     startDate: string,
     days: string,
-  ): Promise<ApiResponse<{ date: Date; available: boolean; suggestion: Date | null }[]>> {
+  ): Promise<ApiResponse<IRecurringResponse[]>> {
     const date = new Date(startDate);
     const _recurringDays = this.generateRecurringDates(date, Number(days));
     const datesISO = _recurringDays.map((d) => d.toISOString());
@@ -542,10 +543,7 @@ export class EventsService {
       suggestion: null,
     }));
 
-    return ApiResponse.success<{ date: Date; available: boolean; suggestion: Date | null }[]>(
-      "Recurrencia verificada",
-      result,
-    );
+    return ApiResponse.success<IRecurringResponse[]>("Recurrencia verificada", result);
   }
 
   // Private methods
