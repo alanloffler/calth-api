@@ -518,7 +518,7 @@ export class EventsService {
     professionalId: string,
     startDate: string,
     days: string,
-  ): Promise<ApiResponse<{ date: Date; available: boolean }[]>> {
+  ): Promise<ApiResponse<{ date: Date; available: boolean; suggestion: Date | null }[]>> {
     const date = new Date(startDate);
     const _recurringDays = this.generateRecurringDates(date, Number(days));
     const datesISO = _recurringDays.map((d) => d.toISOString());
@@ -539,9 +539,13 @@ export class EventsService {
     const result = _recurringDays.map((date) => ({
       date: date,
       available: !occupiedSet.has(date.toISOString()),
+      suggestion: null,
     }));
 
-    return ApiResponse.success<{ date: Date; available: boolean }[]>("Recurrencia verificada", result);
+    return ApiResponse.success<{ date: Date; available: boolean; suggestion: Date | null }[]>(
+      "Recurrencia verificada",
+      result,
+    );
   }
 
   // Private methods
