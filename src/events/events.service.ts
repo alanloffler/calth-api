@@ -537,11 +537,14 @@ export class EventsService {
 
     const occupiedSet = new Set(existing.map((e) => e.startDate.toISOString()));
 
-    const result = _recurringDays.map((date) => ({
-      date: date,
-      available: !occupiedSet.has(date.toISOString()),
-      suggestion: null,
-    }));
+    const result = await Promise.all(
+      _recurringDays.map(async (d) => {
+        const available = !occupiedSet.has(d.toISOString());
+        // TODO: get professional slot duration from config
+        const suggestion = available ? null : await this.findSuggestion(d, 60, businessId, professionalId);
+        return { date: d, available, suggestion };
+      }),
+    );
 
     return ApiResponse.success<IRecurringResponse[]>("Recurrencia verificada", result);
   }
