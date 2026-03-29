@@ -1,5 +1,6 @@
-import { EntityManager } from "typeorm";
+import { EntityManager, Repository } from "typeorm";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
 
 import { CreateProfessionalProfileDto } from "@professional-profile/dto/create-professional-profile.dto";
 import { ProfessionalProfile } from "@professional-profile/entities/professional-profile.entity";
@@ -7,6 +8,10 @@ import { UpdateProfessionalProfileDto } from "@professional-profile/dto/update-p
 
 @Injectable()
 export class ProfessionalProfileService {
+  constructor(
+    @InjectRepository(ProfessionalProfile) private readonly professionalRepository: Repository<ProfessionalProfile>,
+  ) {}
+
   async create(
     profileDto: CreateProfessionalProfileDto,
     userId: string,
@@ -29,6 +34,13 @@ export class ProfessionalProfileService {
     } catch {
       throw new HttpException("Error al crear el perfil del profesional", HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  // Without EP, used on events -> check recurrents
+  async findByUserId(userId: string, businessId: string): Promise<ProfessionalProfile | null> {
+    const profile = await this.professionalRepository.findOne({ where: { businessId, userId } });
+    if (!profile) throw new HttpException("Perfil profesional no encontrado", HttpStatus.NOT_FOUND);
+    return profile;
   }
 
   async update(
