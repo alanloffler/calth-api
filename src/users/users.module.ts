@@ -4,7 +4,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { CreatePatientUseCase } from "@users/use-cases/patient/create-patient.use-case";
 import { CreateProfessionalUseCase } from "@users/use-cases/professional/create-professional.use-case";
 import { PatientProfileService } from "@patient-profile/patient-profile.service";
-import { ProfessionalProfileService } from "@professional-profile/professional-profile.service";
+import { ProfessionalProfileModule } from "@professional-profile/professional-profile.module";
 import { RemovePatientUseCase } from "@users/use-cases/patient/remove-patient.use-case";
 import { RemoveProfessionalUseCase } from "@users/use-cases/professional/remove-professional.use-case";
 import { RestorePatientUseCase } from "@users/use-cases/patient/restore-patient.use-case";
@@ -19,13 +19,12 @@ import { UsersController } from "@users/users.controller";
 import { UsersService } from "@users/users.service";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Role, User])],
+  imports: [TypeOrmModule.forFeature([Role, User]), ProfessionalProfileModule],
   controllers: [UsersController],
   providers: [
     CreatePatientUseCase,
     CreateProfessionalUseCase,
     PatientProfileService,
-    ProfessionalProfileService,
     RemovePatientUseCase,
     RemoveProfessionalUseCase,
     RestorePatientUseCase,
