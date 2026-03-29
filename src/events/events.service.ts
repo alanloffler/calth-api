@@ -4,7 +4,6 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { randomUUID } from "crypto";
 
 import type { IPaginationResponse } from "@events/interfaces/pagination-response.interface";
-import type { IRecurringResponse } from "@events/interfaces/recurring-response.interface";
 import { ApiResponse } from "@common/helpers/api-response.helper";
 import { BusinessService } from "@business/business.service";
 import { CreateEventDto } from "@events/dto/create-event.dto";
@@ -16,6 +15,8 @@ import {
   EVENT_USER_SELECT,
 } from "@events/constants/event-select.constant";
 import { Event } from "@events/entities/event.entity";
+import { ProfessionalProfile } from "@professional-profile/entities/professional-profile.entity";
+import { ProfessionalProfileService } from "@professional-profile/professional-profile.service";
 import { UpdateEventDto } from "@events/dto/update-event.dto";
 import { UsersService } from "@users/users.service";
 
@@ -28,6 +29,7 @@ export class EventsService {
     private readonly businessService: BusinessService,
     private readonly usersService: UsersService,
     private readonly dataSource: DataSource,
+    private readonly professionalProfileService: ProfessionalProfileService,
   ) {}
 
   async create(createEventDto: CreateEventDto, businessId: string): Promise<ApiResponse<Event | Event[]>> {
@@ -519,8 +521,10 @@ export class EventsService {
     professionalId: string,
     startDate: string,
     days: string,
-    slotDurationMinutes: number = 60,
-  ): Promise<ApiResponse<any>> {
+  ): Promise<ApiResponse<{ dates: { date: Date; available: boolean }[]; suggestion: Date | null }>> {
+    const profile = await this.professionalProfileService.findByUserId(professionalId, businessId);
+    if (!profile) throw new HttpException("Perfil profesional no encontrado", HttpStatus.NOT_FOUND);
+
     const date = new Date(startDate);
     const _recurringDays = this.generateRecurringDates(date, Number(days));
     const datesISO = _recurringDays.map((d) => d.toISOString());
@@ -542,16 +546,7 @@ export class EventsService {
     const allAvailable = dates.every((d) => d.available);
     const suggestion = allAvailable
       ? null
-      : await this.findSuggestion(date, Number(days), slotDurationMinutes, businessId, professionalId);
-
-    // const result = await Promise.all(
-    //   _recurringDays.map(async (d) => {
-    //     const available = !occupiedSet.has(d.toISOString());
-    //     // TODO: get professional slot duration from config
-    //     const suggestion = available ? null : await this.findSuggestion(d, 60, businessId, professionalId);
-    //     return { date: d, available, suggestion };
-    //   }),
-    // );
+      : await this.findSuggestion(date, Number(days), profile, businessId, professionalId);
 
     return ApiResponse.success("Recurrencia verificada", { dates, suggestion });
   }
@@ -640,22 +635,48 @@ export class EventsService {
     return dates;
   }
 
-  // consume data from professional config
   private async findSuggestion(
     startDate: Date,
     days: number,
-    slotDurationMinutes: number,
+    profile: ProfessionalProfile,
     businessId: string,
     professionalId: string,
   ): Promise<Date | null> {
-    const slotMs = slotDurationMinutes * 60 * 1000;
-    const maxSlotsPerDay = 16;
-    const maxDaysAhead = 7;
+    const slotMs = parseInt(profile.slotDuration, 10) * 60 * 1000;
+    const [startH, startM] = profile.startHour.split(":").map(Number);
+    const [endH, endM] = profile.endHour.split(":").map(Number);
+    const exStart = profile.dailyExceptionStart ? profile.dailyExceptionStart.split(":").map(Number) : null;
+    const exEnd = profile.dailyExceptionEnd ? profile.dailyExceptionEnd.split(":").map(Number) : null;
+
+    const isWithinSchedule = (candidate: Date): boolean => {
+      const dayOfWeek = candidate.getUTCDay();
+      if (!profile.workingDays.map(Number).includes(dayOfWeek)) return false;
+
+      const tzOffset = parseInt(this.TIME_ZONE, 10);
+      const localHours = candidate.getUTCHours() + tzOffset;
+      const totalMinutes = localHours * 60 + candidate.getUTCMinutes();
+      const scheduleStart = startH * 60 + startM;
+      const scheduleEnd = endH * 60 + endM;
+
+      if (totalMinutes < scheduleStart || totalMinutes + parseInt(profile.slotDuration, 10) > scheduleEnd) return false;
+
+      if (exStart && exEnd) {
+        const exStartMin = exStart[0] * 60 + exStart[1];
+        const exEndMin = exEnd[0] * 60 + exEnd[1];
+        if (totalMinutes >= exStartMin && totalMinutes < exEndMin) return false;
+      }
+
+      return true;
+    };
 
     const areAllSlotsFree = async (candidateStart: Date): Promise<boolean> => {
+      if (!isWithinSchedule(candidateStart)) return false;
+
       const candidateDates = this.generateRecurringDates(candidateStart, days);
 
       for (const candidateDate of candidateDates) {
+        if (!isWithinSchedule(candidateDate)) return false;
+
         const end = new Date(candidateDate.getTime() + slotMs);
         const conflict = await this.eventRepository
           .createQueryBuilder("event")
@@ -671,17 +692,21 @@ export class EventsService {
       return true;
     };
 
-    // 1. Try same day, other hour slots (forward then backward)
-    for (let i = 1; i <= maxSlotsPerDay; i++) {
-      for (const direction of [1, -1]) {
-        const candidate = new Date(startDate.getTime() + direction * i * slotMs);
-        if (candidate.getUTCDate() !== startDate.getUTCDate()) continue;
-        if (await areAllSlotsFree(candidate)) return candidate;
-      }
+    // 1. Same day, try other slots within schedule
+    const scheduleStart = startH * 60 + startM;
+    const scheduleEnd = endH * 60 + endM;
+    const slotDurationMin = parseInt(profile.slotDuration, 10);
+    const tzOffset = parseInt(this.TIME_ZONE, 10);
+
+    for (let min = scheduleStart; min + slotDurationMin <= scheduleEnd; min += slotDurationMin) {
+      const candidate = new Date(startDate);
+      candidate.setUTCHours(Math.floor(min / 60) - tzOffset, min % 60, 0, 0);
+      if (candidate.getTime() === startDate.getTime()) continue;
+      if (await areAllSlotsFree(candidate)) return candidate;
     }
 
     // 2. Next days, same hour
-    for (let day = 1; day <= maxDaysAhead; day++) {
+    for (let day = 1; day <= 7; day++) {
       const candidate = new Date(startDate.getTime());
       candidate.setUTCDate(candidate.getUTCDate() + day);
       if (await areAllSlotsFree(candidate)) return candidate;
