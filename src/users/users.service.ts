@@ -5,6 +5,7 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 
 import { ApiResponse } from "@common/helpers/api-response.helper";
+import { CreateAdminDto } from "@business/dto/create-business-full.dto";
 import { CreateUserDto } from "@users/dto/create-user.dto";
 import { ERole } from "@common/enums/role.enum";
 import { MedicalHistory } from "@medical-history/entities/medical-history.entity";
@@ -74,6 +75,37 @@ export class UsersService {
       businessId,
       password: hashedPassword,
       role: patientRole,
+    });
+
+    return manager.save(user);
+  }
+
+  async createAdmin(adminDto: CreateAdminDto, businessId: string, manager: EntityManager): Promise<User> {
+    const existingIc = await manager.findOne(User, { where: { businessId, ic: adminDto.ic } });
+    if (existingIc) throw new HttpException("DNI ya registrado", HttpStatus.BAD_REQUEST);
+
+    const existingUsername = await manager.findOne(User, { where: { businessId, userName: adminDto.userName } });
+    if (existingUsername) throw new HttpException("Nombre de usuario ya registrado", HttpStatus.BAD_REQUEST);
+
+    const existingEmail = await manager.findOne(User, { where: { businessId, email: adminDto.email } });
+    if (existingEmail) throw new HttpException("Email ya registrado", HttpStatus.BAD_REQUEST);
+
+    const saltRounds = parseInt(this.configService.get("BCRYPT_SALT_ROUNDS") || "10");
+    const hashedPassword = await bcrypt.hash(adminDto.password, saltRounds);
+
+    const role = await manager.findOne(Role, { where: { id: adminDto.roleId } });
+    if (!role) throw new HttpException("Rol no encontrado", HttpStatus.BAD_REQUEST);
+
+    const user = manager.create(User, {
+      ic: adminDto.ic,
+      userName: adminDto.userName,
+      firstName: adminDto.firstName,
+      lastName: adminDto.lastName,
+      email: adminDto.email,
+      phoneNumber: adminDto.phoneNumber,
+      businessId,
+      password: hashedPassword,
+      role,
     });
 
     return manager.save(user);
