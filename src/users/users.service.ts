@@ -18,7 +18,6 @@ import {
 } from "@users/constants/user-select.constant";
 import { UpdateUserDto } from "@users/dto/update-user.dto";
 import { User } from "@users/entities/user.entity";
-import { PostgresError } from "postgres";
 
 @Injectable()
 export class UsersService {
