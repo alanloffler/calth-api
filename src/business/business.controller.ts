@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe } from "@nestjs/common";
 
-import { BusinessId } from "@common/decorators/business-id.decorator";
 import { BusinessService } from "@business/business.service";
-import { CreateBusinessDto } from "@business/dto/create-business.dto";
+import { CreateBusinessFullDto } from "@business/dto/create-business-full.dto";
+import { CreateBusinessWithAdminUseCase } from "@business/use-cases/create-business-with-admin.use-case";
 import { JwtAuthGuard } from "@auth/guards/jwt-auth.guard";
 import { PermissionsGuard } from "@auth/guards/permissions.guard";
 import { UpdateBusinessDto } from "@business/dto/update-business.dto";
@@ -11,11 +11,14 @@ import { UpdateBusinessDto } from "@business/dto/update-business.dto";
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller("businesses")
 export class BusinessController {
-  constructor(private readonly businessService: BusinessService) {}
+  constructor(
+    private readonly businessService: BusinessService,
+    private readonly createBusinessWithAdminUseCase: CreateBusinessWithAdminUseCase,
+  ) {}
 
   @Post()
-  create(@Body() createBusinessDto: CreateBusinessDto) {
-    return this.businessService.create(createBusinessDto);
+  create(@Body() createBusinessFullDto: CreateBusinessFullDto) {
+    return this.createBusinessWithAdminUseCase.execute(createBusinessFullDto);
   }
 
   @Get()
