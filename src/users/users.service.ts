@@ -18,6 +18,7 @@ import {
 } from "@users/constants/user-select.constant";
 import { UpdateUserDto } from "@users/dto/update-user.dto";
 import { User } from "@users/entities/user.entity";
+import { PostgresError } from "postgres";
 
 @Injectable()
 export class UsersService {
@@ -379,9 +380,10 @@ export class UsersService {
 
     try {
       await manager.remove(user);
-    } catch (error) {
-      const pgCode = error.code || error.driverError?.code;
-      const pgTable = error.table || error.driverError?.table;
+    } catch (error: unknown) {
+      const err = error as any;
+      const pgCode = err.code || err.driverError?.code;
+      const pgTable = err.table || err.driverError?.table;
 
       if (pgCode === "23503" && pgTable === "medical_history") {
         throw new HttpException("No podes eliminar un paciente con historias médicas", HttpStatus.CONFLICT);
