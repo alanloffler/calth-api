@@ -8,7 +8,6 @@ import { PermissionsGuard } from "@auth/guards/permissions.guard";
 import { UpdateBusinessDto } from "@business/dto/update-business.dto";
 
 // TODO: add permissions
-@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller("businesses")
 export class BusinessController {
   constructor(
@@ -21,6 +20,7 @@ export class BusinessController {
     return this.createBusinessWithAdminUseCase.execute(createBusinessFullDto);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Get()
   findAll() {
     return this.businessService.findAll();
@@ -31,16 +31,19 @@ export class BusinessController {
     return this.businessService.checkSlugAvailability(slug);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.businessService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Patch(":id")
   update(@Param("id", ParseUUIDPipe) id: string, @Body() updateBusinessDto: UpdateBusinessDto) {
     return this.businessService.update(id, updateBusinessDto);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.businessService.remove(id);
