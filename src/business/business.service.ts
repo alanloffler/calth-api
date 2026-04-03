@@ -6,6 +6,7 @@ import { ApiResponse } from "@common/helpers/api-response.helper";
 import { Business } from "@business/entities/business.entity";
 import { CreateBusinessDto } from "@business/dto/create-business.dto";
 import { UpdateBusinessDto } from "@business/dto/update-business.dto";
+import { User } from "@users/entities/user.entity";
 
 @Injectable()
 export class BusinessService {
@@ -25,16 +26,17 @@ export class BusinessService {
   }
 
   async findOne(businessId: string): Promise<ApiResponse<Business>> {
-    const business = await this.businessRepository
-      .createQueryBuilder("business")
-      .leftJoinAndSelect("business.users", "user")
-      .leftJoinAndSelect("user.role", "role")
-      .where("business.id = :businessId", { businessId })
+    const business = await this.businessRepository.findOne({ where: { id: businessId } });
+    if (!business) throw new HttpException("Negocio no encontrado!", HttpStatus.NOT_FOUND);
+
+    business.users = await this.businessRepository.manager
+      .createQueryBuilder(User, "user")
+      .innerJoin("user.role", "role")
+      .where("user.businessId = :businessId", { businessId })
       .andWhere("role.value = :type", { type: "patient" })
-      .limit(5)
       .orderBy("user.createdAt", "DESC")
-      .getOne();
-    if (!business) throw new HttpException("Negocio no encontrado", HttpStatus.NOT_FOUND);
+      .limit(5)
+      .getMany();
 
     return ApiResponse.success<Business>("Negocio encontrado", business);
   }
