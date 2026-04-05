@@ -26,6 +26,11 @@ export class BusinessController {
     return this.businessService.findAll();
   }
 
+  @Get("availability/tax-id/:taxId")
+  checkTaxIdAvailability(@Param("taxId") taxId: string) {
+    return this.businessService.checkTaxIdAvailability(taxId);
+  }
+
   @Get("availability/slug/:slug")
   checkSlugAvailability(@Param("slug") slug: string) {
     return this.businessService.checkSlugAvailability(slug);
