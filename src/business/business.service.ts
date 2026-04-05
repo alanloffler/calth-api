@@ -77,7 +77,6 @@ export class BusinessService {
     return await this.businessRepository.findOne({ where: { slug }, select: ["id", "slug", "tradeName"] });
   }
 
-  // Will be used as public on business creation
   public async checkTaxIdAvailability(taxId: string, excludeId?: string): Promise<boolean> {
     const query = this.businessRepository.createQueryBuilder("business").where("business.taxId = :taxId", { taxId });
 
@@ -88,7 +87,6 @@ export class BusinessService {
     return !business;
   }
 
-  // Will be used as public on business creation
   public async checkSlugAvailability(slug: string, excludeId?: string): Promise<boolean> {
     const query = this.businessRepository.createQueryBuilder("business").where("business.slug = :slug", { slug });
 
