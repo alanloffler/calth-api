@@ -26,7 +26,7 @@ export class BusinessController {
     return this.businessService.findAll();
   }
 
-  @Get("check-slug-availability/:slug")
+  @Get("availability/slug/:slug")
   checkSlugAvailability(@Param("slug") slug: string) {
     return this.businessService.checkSlugAvailability(slug);
   }
