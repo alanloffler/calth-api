@@ -82,19 +82,20 @@ export class BusinessService {
 
     if (excludeId) query.andWhere("business.id != :excludeId", { excludeId });
 
-    const business = await query.getOne();
-    const message = business ? "CUIT no disponible" : "CUIT disponible";
+    const result = await query.getOne();
+    const message = result ? "CUIT no disponible" : "CUIT disponible";
 
-    return ApiResponse.success<boolean>(message, !business);
+    return ApiResponse.success<boolean>(message, !result);
   }
 
-  public async checkSlugAvailability(slug: string, excludeId?: string): Promise<boolean> {
+  public async checkSlugAvailability(slug: string, excludeId?: string): Promise<ApiResponse<boolean>> {
     const query = this.businessRepository.createQueryBuilder("business").where("business.slug = :slug", { slug });
 
     if (excludeId) query.andWhere("business.id != :excludeId", { excludeId });
 
-    const business = await query.getOne();
+    const result = await query.getOne();
+    const message = result ? "Slug no disponible" : "Slug disponible";
 
-    return !business;
+    return ApiResponse.success<boolean>(message, !result);
   }
 }
