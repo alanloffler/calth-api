@@ -43,13 +43,13 @@ export class BusinessService {
 
   async update(businessId: string, updateBusinessDto: UpdateBusinessDto) {
     if (updateBusinessDto.taxId) {
-      const availableTaxId = await this.checkTaxIdAvailability(updateBusinessDto.taxId, businessId);
+      const { data: availableTaxId } = await this.checkTaxIdAvailability(updateBusinessDto.taxId, businessId);
       if (!availableTaxId)
         throw new HttpException("CUIT no disponible, debes elegir un CUIT diferente", HttpStatus.BAD_REQUEST);
     }
 
     if (updateBusinessDto.slug) {
-      const availableSlug = await this.checkSlugAvailability(updateBusinessDto.slug, businessId);
+      const { data: availableSlug } = await this.checkSlugAvailability(updateBusinessDto.slug, businessId);
       if (!availableSlug)
         throw new HttpException(
           "Subdominio no disponible, debes elegir un subdominio diferente",
