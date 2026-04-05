@@ -16,11 +16,11 @@ export class CreateBusinessWithAdminUseCase {
   ) {}
 
   async execute(dto: CreateBusinessFullDto): Promise<ApiResponse<Business>> {
-    const availableTaxId = await this.businessService.checkTaxIdAvailability(dto.business.taxId);
+    const { data: availableTaxId } = await this.businessService.checkTaxIdAvailability(dto.business.taxId);
     if (!availableTaxId)
       throw new HttpException("CUIT no disponible, debes elegir un CUIT diferente", HttpStatus.BAD_REQUEST);
 
-    const availableSlug = await this.businessService.checkSlugAvailability(dto.business.slug);
+    const { data: availableSlug } = await this.businessService.checkSlugAvailability(dto.business.slug);
     if (!availableSlug)
       throw new HttpException("Subdominio no disponible, debes elegir un subdominio diferente", HttpStatus.BAD_REQUEST);
 
