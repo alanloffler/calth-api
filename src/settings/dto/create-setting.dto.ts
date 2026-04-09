@@ -26,7 +26,7 @@ export class CreateSettingDto {
   @IsNotEmpty({ message: "El título es obligatorio" })
   title: string;
 
-  @MinLength(3, { message: "El valor debe tener al menos 3 caracteres" })
+  @MinLength(2, { message: "El valor debe tener al menos 2 caracteres" })
   @IsString({ message: "El valor debe ser una cadena de texto" })
   @IsNotEmpty({ message: "El valor es obligatorio" })
   value: string;
