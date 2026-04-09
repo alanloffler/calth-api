@@ -1,5 +1,6 @@
 export const ESubmodule = {
   EMAIL: "email",
+  LOCALE: "locale",
   MENU: "menu",
   THEME: "theme",
 } as const;
