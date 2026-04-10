@@ -49,6 +49,9 @@ export class Business {
   zipCode: string;
 
   @Column({ type: "varchar", length: 100, nullable: false })
+  timezone: string;
+
+  @Column({ type: "varchar", length: 100, nullable: false })
   email: string;
 
   @Column({ type: "varchar", length: 10, name: "phone_number", nullable: false })
