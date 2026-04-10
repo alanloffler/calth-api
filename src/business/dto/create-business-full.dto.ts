@@ -82,7 +82,7 @@ export class CreateBusinessDataDto {
   @IsNotEmpty({ message: "La provincia es obligatoria" })
   province: string;
 
-  @MinLength(3, { message: "El país debe tener al menos 3 caracteres" })
+  @MinLength(2, { message: "El país debe tener al menos 2 caracteres" })
   @IsString({ message: "El país debe ser una cadena de texto" })
   @IsNotEmpty({ message: "El país es obligatorio" })
   country: string;
@@ -91,6 +91,11 @@ export class CreateBusinessDataDto {
   @IsString({ message: "El código postal debe ser una cadena de texto" })
   @IsNotEmpty({ message: "El código postal es obligatorio" })
   zipCode: string;
+
+  @MinLength(3, { message: "La zona horaria debe tener al menos 3 caracteres" })
+  @IsString({ message: "La zona horaria debe ser una cadena de texto" })
+  @IsNotEmpty({ message: "La zona horaria es obligatoria" })
+  timezone: string;
 }
 
 export class CreateContactDto {
