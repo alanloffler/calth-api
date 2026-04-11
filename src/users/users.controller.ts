@@ -174,6 +174,18 @@ export class UsersController {
     return this.usersService.findOne(id, businessId);
   }
 
+  // Patch controllers
+  @RequiredPermissions(["admin-update", "patient-update", "professional-update"], "some")
+  @Patch("profile")
+  updateProfile(
+    @Request() req: IRequest,
+    @BusinessId(ParseUUIDPipe) businessId: string,
+    @Body() userDto: UpdateUserDto,
+  ) {
+    const userId = req.user.id;
+    return this.usersService.update(userId, businessId, userDto);
+  }
+
   @RequiredPermissions("patient-restore")
   @Patch(":id/patient/restore")
   restorePatient(@Param("id", ParseUUIDPipe) id: string, @BusinessId(ParseUUIDPipe) businessId: string) {
