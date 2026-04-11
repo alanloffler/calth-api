@@ -18,7 +18,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get("logout")
+  @Post("logout")
   signOut(@Req() req: IRequest, @Res({ passthrough: true }) res: Response) {
     return this.authService.signOut(req.user, res);
   }
