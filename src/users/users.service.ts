@@ -335,6 +335,7 @@ export class UsersService {
   }
 
   // TODO: maybe remove after implement updatePatient
+  // DO NOT REMOVE: used on update user own profile
   async update(id: string, businessId: string, updateUserDto: UpdateUserDto) {
     const user = await this.userRepository.findOne({
       where: { businessId, id },
