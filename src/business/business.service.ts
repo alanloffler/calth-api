@@ -1,5 +1,4 @@
-import { EventEmitter2 } from "@nestjs/event-emitter";
-import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -11,24 +10,12 @@ import { User } from "@users/entities/user.entity";
 
 @Injectable()
 export class BusinessService {
-  private readonly logger = new Logger(BusinessService.name);
-
-  constructor(
-    @InjectRepository(Business) private readonly businessRepository: Repository<Business>,
-    private readonly eventEmitter: EventEmitter2,
-  ) {}
+  constructor(@InjectRepository(Business) private readonly businessRepository: Repository<Business>) {}
 
   async create(createBusinessDto: CreateBusinessDto): Promise<ApiResponse<Business>> {
     const business = this.businessRepository.create(createBusinessDto);
     const saveBusiness = await this.businessRepository.save(business);
     if (!saveBusiness) throw new HttpException("Error al crear negocio", HttpStatus.BAD_REQUEST);
-
-    this.logger.log(`Emitting clinic.created event for ${saveBusiness.email}`);
-    const result = this.eventEmitter.emit("clinic.created", {
-      email: saveBusiness.email,
-      clinicName: saveBusiness.companyName,
-    });
-    this.logger.log(`Event emit result: ${result}, listeners: ${this.eventEmitter.listenerCount("clinic.created")}`);
 
     return ApiResponse.created<Business>("Negocio creado", saveBusiness);
   }
