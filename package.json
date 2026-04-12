@@ -26,6 +26,7 @@
     "worker": "ts-node src/notifications/worker.ts"
   },
   "dependencies": {
+    "@nestjs/bullmq": "^11.0.4",
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.1.17",
     "@nestjs/config": "^4.0.3",
