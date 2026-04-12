@@ -1,12 +1,13 @@
-// src/notifications/worker.ts
+import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
-import { WorkerModule } from "./worker.module";
 import { Worker } from "bullmq";
-import { EmailService } from "./email/email.service";
+
+import { EmailService } from "@notifications/email/email.service";
+import { WorkerModule } from "@notifications/worker.module";
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(WorkerModule);
-
+  const configService = app.get(ConfigService);
   const emailService = app.get(EmailService);
 
   const worker = new Worker(
@@ -22,8 +23,8 @@ async function bootstrap() {
     },
     {
       connection: {
-        host: "127.0.0.1",
-        port: 6379,
+        host: configService.get<string>("REDIS_HOST"),
+        port: configService.get<number>("REDIS_PORT"),
       },
     },
   );
