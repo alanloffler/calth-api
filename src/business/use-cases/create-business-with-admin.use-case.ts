@@ -1,5 +1,6 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { DataSource } from "typeorm";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 
 import { ApiResponse } from "@common/helpers/api-response.helper";
 import { Business } from "@business/entities/business.entity";
@@ -10,8 +11,9 @@ import { UsersService } from "@users/users.service";
 @Injectable()
 export class CreateBusinessWithAdminUseCase {
   constructor(
-    private readonly dataSource: DataSource,
     private readonly businessService: BusinessService,
+    private readonly dataSource: DataSource,
+    private readonly eventEmitter: EventEmitter2,
     private readonly usersService: UsersService,
   ) {}
 
@@ -38,6 +40,8 @@ export class CreateBusinessWithAdminUseCase {
       await this.usersService.createAdmin(dto.admin, savedBusiness.id, queryRunner.manager);
 
       await queryRunner.commitTransaction();
+
+      this.eventEmitter.emit("clinic.created", { email: savedBusiness.email, clinicName: savedBusiness.companyName });
 
       return ApiResponse.created<Business>("Negocio creado", savedBusiness);
     } catch (error) {
