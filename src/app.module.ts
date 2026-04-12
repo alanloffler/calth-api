@@ -1,4 +1,5 @@
 import { ConfigModule } from "@nestjs/config";
+import { EventEmitterModule } from "@nestjs/event-emitter";
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
@@ -7,7 +8,6 @@ import { BusinessModule } from "@business/business.module";
 import { CacheConfigModule } from "@config/cache-config.module";
 import { EventsModule } from "@events/events.module";
 import { MedicalHistoryModule } from "@medical-history/medical-history.module";
-import { NotificationsModule } from "@notifications/notifications.module";
 import { PatientProfileModule } from "@patient-profile/patient-profile.module";
 import { PermissionsModule } from "@permissions/permissions.module";
 import { ProfessionalProfileModule } from "@professional-profile/professional-profile.module";
@@ -23,6 +23,7 @@ import { typeOrmConfig } from "@config/typeorm.config";
       isGlobal: true,
       envFilePath: ".env",
     }),
+    EventEmitterModule.forRoot(),
     TypeOrmModule.forRoot({
       ...typeOrmConfig,
       autoLoadEntities: true,
@@ -31,7 +32,6 @@ import { typeOrmConfig } from "@config/typeorm.config";
     BusinessModule,
     EventsModule,
     MedicalHistoryModule,
-    NotificationsModule,
     PatientProfileModule,
     PermissionsModule,
     ProfessionalProfileModule,
