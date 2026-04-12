@@ -1,12 +1,14 @@
 import sgMail from "@sendgrid/mail";
+import { ConfigService } from "@nestjs/config";
+import { Injectable } from "@nestjs/common";
 
+@Injectable()
 export class EmailService {
-  constructor() {
-    const apiKey = process.env.SENDGRID_API_KEY;
+  private readonly fromEmail: string;
 
-    if (!apiKey) {
-      throw new Error("SENDGRID_API_KEY is not defined");
-    }
+  constructor(private readonly configService: ConfigService) {
+    const apiKey = this.configService.getOrThrow<string>("SENDGRID_API_KEY");
+    this.fromEmail = this.configService.getOrThrow<string>("SENDGRID_FROM_EMAIL");
 
     sgMail.setApiKey(apiKey);
   }
@@ -14,7 +16,7 @@ export class EmailService {
   async sendClinicCreatedEmail(to: string, clinicName: string) {
     await sgMail.send({
       to,
-      from: "alanmatiasloffler@gmail.com",
+      from: this.fromEmail,
       subject: "Clínica creada",
       html: `<h1>Tu clínica ${clinicName} fue creada</h1>`,
     });
