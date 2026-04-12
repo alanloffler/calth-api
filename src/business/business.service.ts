@@ -1,3 +1,4 @@
+import { EventEmitter2 } from "@nestjs/event-emitter";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -10,13 +11,17 @@ import { User } from "@users/entities/user.entity";
 
 @Injectable()
 export class BusinessService {
-  constructor(@InjectRepository(Business) private readonly businessRepository: Repository<Business>) {}
+  constructor(
+    @InjectRepository(Business) private readonly businessRepository: Repository<Business>,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   async create(createBusinessDto: CreateBusinessDto): Promise<ApiResponse<Business>> {
     const business = this.businessRepository.create(createBusinessDto);
     const saveBusiness = await this.businessRepository.save(business);
     if (!saveBusiness) throw new HttpException("Error al crear negocio", HttpStatus.BAD_REQUEST);
-    console.log(saveBusiness);
+
+    this.eventEmitter.emit("clinic.created", { email: saveBusiness.email, clinicName: saveBusiness.companyName });
 
     return ApiResponse.created<Business>("Negocio creado", saveBusiness);
   }
