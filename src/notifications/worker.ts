@@ -3,8 +3,8 @@ import { NestFactory } from "@nestjs/core";
 import { Worker } from "bullmq";
 
 // IMPORTANT: Cannot use alias
-import { EmailService } from "./email/email.service";
-import { WorkerModule } from "./worker.module";
+import { EmailService } from "@notifications/email/email.service";
+import { WorkerModule } from "@notifications/worker.module";
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(WorkerModule);
