@@ -22,7 +22,8 @@
     "migration:generate": "npm run typeorm -- migration:generate -d typeorm.datasource.ts",
     "migration:run": "npm run typeorm migration:run -- -d typeorm.datasource.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d typeorm.datasource.ts",
-    "migration:create": "npm run typeorm -- migration:create"
+    "migration:create": "npm run typeorm -- migration:create",
+    "worker": "ts-node src/notifications/worker.ts"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.1.0",
