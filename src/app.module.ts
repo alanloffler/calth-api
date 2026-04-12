@@ -1,4 +1,5 @@
-import { ConfigModule } from "@nestjs/config";
+import { BullModule } from "@nestjs/bullmq";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { EventEmitterModule } from "@nestjs/event-emitter";
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -23,6 +24,15 @@ import { typeOrmConfig } from "@config/typeorm.config";
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ".env",
+    }),
+    BullModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>("REDIS_HOST"),
+          port: configService.get<number>("REDIS_PORT"),
+        },
+      }),
+      inject: [ConfigService],
     }),
     EventEmitterModule.forRoot(),
     TypeOrmModule.forRoot({
