@@ -14,7 +14,7 @@ export class EmailService {
   async sendClinicCreatedEmail(to: string, clinicName: string) {
     await sgMail.send({
       to,
-      from: "no-reply@calth.com",
+      from: "alanmatiasloffler@gmail.com",
       subject: "Clínica creada",
       html: `<h1>Tu clínica ${clinicName} fue creada</h1>`,
     });
