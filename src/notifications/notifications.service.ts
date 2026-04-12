@@ -7,6 +7,8 @@ import { Queue } from "bullmq";
 export class NotificationsService {
   constructor(@InjectQueue("notifications") private readonly queue: Queue) {}
 
+  // TODO: implement notifications on events
+  // TODO: implement notifications on users
   @OnEvent("clinic.created")
   async handleClinicCreatedEvent(payload: { email: string; clinicName: string }) {
     await this.queue.add("send-email", {
