@@ -13,12 +13,12 @@ export class EmailService {
     sgMail.setApiKey(apiKey);
   }
 
-  async sendClinicCreatedEmail(to: string, clinicName: string) {
+  async sendBusinessCreatedEmail(to: string, companyName: string) {
     await sgMail.send({
       to,
       from: this.fromEmail,
-      subject: "Clínica creada",
-      html: `<h1>Tu clínica ${clinicName} fue creada</h1>`,
+      subject: "Calth - Alta de negocio",
+      html: `<h1>Tu negocio ${companyName} fue creado</h1>`,
     });
   }
 }
