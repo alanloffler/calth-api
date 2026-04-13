@@ -9,10 +9,10 @@ export class NotificationsService {
 
   // TODO: implement notifications on events
   // TODO: implement notifications on users
-  @OnEvent("clinic.created")
-  async handleClinicCreatedEvent(payload: { email: string; clinicName: string }) {
+  @OnEvent("business.created")
+  async businessCreatedEvent(payload: { email: string; companyName: string }) {
     await this.queue.add("send-email", {
-      type: "clinic-created",
+      type: "business-created",
       ...payload,
     });
   }
