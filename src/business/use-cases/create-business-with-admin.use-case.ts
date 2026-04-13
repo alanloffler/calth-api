@@ -41,9 +41,11 @@ export class CreateBusinessWithAdminUseCase {
 
       await queryRunner.commitTransaction();
 
+      // TODO: get domain from config .env
       this.eventEmitter.emit("business.created", {
         email: savedBusiness.email,
         companyName: savedBusiness.companyName,
+        companyLink: `https://${savedBusiness.slug}.calth.app`,
       });
 
       return ApiResponse.created<Business>("Negocio creado", savedBusiness);
