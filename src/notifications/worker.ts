@@ -14,10 +14,10 @@ async function bootstrap() {
     "notifications",
     async (job) => {
       if (job.name === "send-email") {
-        const { type, email, companyName } = job.data;
+        const { type, email, companyName, companyLink } = job.data;
 
         if (type === "business-created") {
-          await emailService.sendBusinessCreatedEmail(email, companyName);
+          await emailService.sendBusinessCreatedEmail(email, companyName, companyLink);
         }
       }
     },
