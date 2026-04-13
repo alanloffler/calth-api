@@ -24,6 +24,18 @@ export class EmailService {
     });
   }
 
+  async sendEventCreatedEmail(
+    to: string,
+    data: { companyName: string; userName: string; title: string; startDate: string },
+  ) {
+    await sgMail.send({
+      to,
+      from: this.fromEmail,
+      subject: "Calth - Turno creado",
+      html: this.renderTemplate("event-created", data),
+    });
+  }
+
   private renderTemplate(name: string, data: Record<string, string>): string {
     const filePath = join(__dirname, "templates", `${name}.html`);
     let html = readFileSync(filePath, "utf-8");
