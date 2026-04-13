@@ -26,7 +26,7 @@ export class EmailService {
 
   async sendEventCreatedEmail(
     to: string,
-    data: { companyName: string; userName: string; title: string; startDate: string },
+    data: { companyName: string; fullName: string; title: string; startDate: string },
   ) {
     await sgMail.send({
       to,
