@@ -9,10 +9,17 @@ export class NotificationsService {
 
   @OnEvent("business.created")
   async businessCreatedEvent(payload: { email: string; companyName: string; companyLink: string }) {
-    await this.queue.add("send-email", {
-      type: "business-created",
-      ...payload,
-    });
+    await this.queue.add(
+      "send-email",
+      {
+        type: "business-created",
+        ...payload,
+      },
+      {
+        attempts: 2,
+        backoff: { type: "exponential", delay: 5000 },
+      },
+    );
   }
 
   @OnEvent("event.created")
@@ -23,9 +30,16 @@ export class NotificationsService {
     title: string;
     startDate: string;
   }) {
-    await this.queue.add("send-email", {
-      type: "event-created",
-      ...payload,
-    });
+    await this.queue.add(
+      "send-email",
+      {
+        type: "event-created",
+        ...payload,
+      },
+      {
+        attempts: 2,
+        backoff: { type: "exponential", delay: 5000 },
+      },
+    );
   }
 }
