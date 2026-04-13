@@ -2,7 +2,6 @@ import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import { Worker } from "bullmq";
 
-// IMPORTANT: Cannot use alias
 import { EmailService } from "@notifications/email/email.service";
 import { WorkerModule } from "@notifications/worker.module";
 
@@ -15,10 +14,10 @@ async function bootstrap() {
     "notifications",
     async (job) => {
       if (job.name === "send-email") {
-        const { type, email, clinicName } = job.data;
+        const { type, email, companyName } = job.data;
 
-        if (type === "clinic-created") {
-          await emailService.sendClinicCreatedEmail(email, clinicName);
+        if (type === "business-created") {
+          await emailService.sendBusinessCreatedEmail(email, companyName);
         }
       }
     },
