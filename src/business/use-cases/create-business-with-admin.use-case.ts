@@ -41,7 +41,10 @@ export class CreateBusinessWithAdminUseCase {
 
       await queryRunner.commitTransaction();
 
-      this.eventEmitter.emit("clinic.created", { email: savedBusiness.email, clinicName: savedBusiness.companyName });
+      this.eventEmitter.emit("business.created", {
+        email: savedBusiness.email,
+        companyName: savedBusiness.companyName,
+      });
 
       return ApiResponse.created<Business>("Negocio creado", savedBusiness);
     } catch (error) {
