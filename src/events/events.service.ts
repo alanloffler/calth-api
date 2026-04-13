@@ -79,7 +79,7 @@ export class EventsService {
         this.eventEmitter.emit("event.created", {
           companyName: saveEvent.businessId,
           email: user.email,
-          userName: user.firstName,
+          fullName: `${user.firstName} ${user.lastName}`,
           title: saveEvent.title,
           startDate: saveEvent.startDate.toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" }),
         });
