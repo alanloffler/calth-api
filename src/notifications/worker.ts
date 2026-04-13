@@ -14,12 +14,12 @@ async function bootstrap() {
     "notifications",
     async (job) => {
       if (job.name === "send-email") {
-        const { companyLink, companyName, email, startDate, title, type, userName } = job.data;
+        const { companyLink, companyName, email, fullName, startDate, title, type } = job.data;
 
         if (type === "business-created") {
           await emailService.sendBusinessCreatedEmail(email, companyName, companyLink);
         } else if (type === "event-created") {
-          await emailService.sendEventCreatedEmail(email, { companyName, userName, title, startDate });
+          await emailService.sendEventCreatedEmail(email, { companyName, fullName, title, startDate });
         }
       }
     },
