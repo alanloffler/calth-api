@@ -16,4 +16,18 @@ export class NotificationsService {
       ...payload,
     });
   }
+
+  @OnEvent("event.created")
+  async eventCreatedEvent(payload: {
+    email: string;
+    companyName: string;
+    userName: string;
+    title: string;
+    startDate: string;
+  }) {
+    await this.queue.add("send-email", {
+      type: "event-created",
+      ...payload,
+    });
+  }
 }
