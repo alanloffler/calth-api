@@ -1,4 +1,5 @@
 import { DataSource, LessThan, MoreThan, Not, Repository } from "typeorm";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { randomUUID } from "crypto";
@@ -27,6 +28,7 @@ export class EventsService {
   constructor(
     @InjectRepository(Event) private readonly eventRepository: Repository<Event>,
     private readonly businessService: BusinessService,
+    private readonly eventEmitter: EventEmitter2,
     private readonly usersService: UsersService,
     private readonly dataSource: DataSource,
     private readonly professionalProfileService: ProfessionalProfileService,
@@ -68,7 +70,21 @@ export class EventsService {
     const newEvent = this.eventRepository.create(fullDto);
 
     try {
+      // Save event
       const saveEvent = await this.eventRepository.save(newEvent);
+      // Get user data and emit event
+      // TODO: GET COMPANY NAME FROM BUSINESSID
+      const user = await this.usersService.findOneById(createEventDto.userId, businessId);
+      if (user) {
+        this.eventEmitter.emit("event.created", {
+          companyName: saveEvent.businessId,
+          email: user.email,
+          userName: user.firstName,
+          title: saveEvent.title,
+          startDate: saveEvent.startDate.toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" }),
+        });
+      }
+
       return ApiResponse.created<Event>("Turno creado", saveEvent);
     } catch (error: any) {
       if (error?.driverError?.code === "23505") {
