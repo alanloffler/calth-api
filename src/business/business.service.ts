@@ -20,10 +20,6 @@ export class BusinessService {
     return ApiResponse.created<Business>("Negocio creado", saveBusiness);
   }
 
-  findAll() {
-    return `This action returns all business`;
-  }
-
   async findOne(businessId: string): Promise<ApiResponse<Business>> {
     const business = await this.businessRepository.findOne({ where: { id: businessId } });
     if (!business) throw new HttpException("Negocio no encontrado!", HttpStatus.NOT_FOUND);
