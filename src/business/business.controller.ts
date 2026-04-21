@@ -20,12 +20,6 @@ export class BusinessController {
     return this.createBusinessWithAdminUseCase.execute(createBusinessFullDto);
   }
 
-  @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Get()
-  findAll() {
-    return this.businessService.findAll();
-  }
-
   @Get("availability/tax-id/:taxId")
   checkTaxIdAvailability(@Param("taxId") taxId: string) {
     return this.businessService.checkTaxIdAvailability(taxId);
