@@ -5,9 +5,9 @@ import { CreateBusinessFullDto } from "@business/dto/create-business-full.dto";
 import { CreateBusinessWithAdminUseCase } from "@business/use-cases/create-business-with-admin.use-case";
 import { JwtAuthGuard } from "@auth/guards/jwt-auth.guard";
 import { PermissionsGuard } from "@auth/guards/permissions.guard";
+import { RequiredPermissions } from "@auth/decorators/required-permissions.decorator";
 import { UpdateBusinessDto } from "@business/dto/update-business.dto";
 
-// TODO: add permissions
 @Controller("businesses")
 export class BusinessController {
   constructor(
@@ -31,18 +31,21 @@ export class BusinessController {
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequiredPermissions("business-view")
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.businessService.findOne(id);
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequiredPermissions("business-update")
   @Patch(":id")
   update(@Param("id", ParseUUIDPipe) id: string, @Body() updateBusinessDto: UpdateBusinessDto) {
     return this.businessService.update(id, updateBusinessDto);
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequiredPermissions("business-delete-hard")
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.businessService.remove(id);
