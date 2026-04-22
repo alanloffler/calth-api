@@ -26,6 +26,7 @@
       "@admin/*": ["./src/admin/*"],
       "@auth/*": ["./src/auth/*"],
       "@business/*": ["./src/business/*"],
+      "@blocked-days/*": ["./src/blocked-days/*"],
       "@common/*": ["./src/common/*"],
       "@config/*": ["./src/config/*"],
       "@events/*": ["./src/events/*"],
