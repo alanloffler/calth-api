@@ -52,7 +52,11 @@ export class BlockedDaysService {
     }
   }
 
-  async remove(businessId: string, id: string) {
-    return `This action removes blockedDay #${id} from business #${businessId}`;
+  async remove(businessId: string, id: string): Promise<ApiResponse<void>> {
+    const remove = await this.blockedDayRepository.delete({ id, businessId });
+    if (!remove) throw new HttpException("Error eliminando día bloqueado", HttpStatus.INTERNAL_SERVER_ERROR);
+    if (remove.affected === 0) throw new HttpException("Día bloqueado no encontrado", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.removed<void>("Día bloqueado eliminado");
   }
 }
