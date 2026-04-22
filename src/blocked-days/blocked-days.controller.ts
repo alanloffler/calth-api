@@ -15,8 +15,11 @@ export class BlockedDaysController {
   }
 
   @Get(":professionalId")
-  findOne(@BusinessId(ParseUUIDPipe) businessId: string, @Param("professionalId", ParseUUIDPipe) id: string) {
-    return this.blockedDaysService.findOne(businessId, id);
+  findAll(
+    @BusinessId(ParseUUIDPipe) businessId: string,
+    @Param("professionalId", ParseUUIDPipe) professionalId: string,
+  ) {
+    return this.blockedDaysService.findAll(businessId, professionalId);
   }
 
   @Patch(":id")
