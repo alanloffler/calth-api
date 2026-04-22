@@ -8,7 +8,7 @@ import { UpdateBlockedDayDto } from "@blocked-days/dto/update-blocked-day.dto";
 
 @Injectable()
 export class BlockedDaysService {
-  @InjectRepository(BlockedDay) private readonly blockedDayRepository: Repository<BlockedDay>;
+  constructor(@InjectRepository(BlockedDay) private readonly blockedDayRepository: Repository<BlockedDay>) {}
 
   async create(businessId: string, createBlockedDayDto: CreateBlockedDayDto) {
     console.log(createBlockedDayDto);
