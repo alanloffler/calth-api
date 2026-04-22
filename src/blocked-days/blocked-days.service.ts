@@ -35,9 +35,21 @@ export class BlockedDaysService {
     return ApiResponse.success<BlockedDay[]>("Días bloqueados encontrados", blockedDays);
   }
 
-  async update(businessId: string, id: string, updateBlockedDayDto: UpdateBlockedDayDto) {
-    console.log(updateBlockedDayDto);
-    return `This action updates blockedDay #${id} from business #${businessId}`;
+  async update(businessId: string, id: string, updateBlockedDayDto: UpdateBlockedDayDto): Promise<ApiResponse<void>> {
+    try {
+      const update = await this.blockedDayRepository.update({ id, businessId }, updateBlockedDayDto);
+      if (update.affected === 0) throw new HttpException("Día bloqueado no encontrado", HttpStatus.NOT_FOUND);
+
+      return ApiResponse.success<void>("Día bloqueado actualizado");
+    } catch (error) {
+      if (error instanceof QueryFailedError) {
+        const pgError = error as any;
+        if (pgError.code === "23505") {
+          throw new HttpException("El día bloqueado ya existe, elige otra fecha", HttpStatus.CONFLICT);
+        }
+      }
+      throw new HttpException("Error al actualizar el día bloqueado", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async remove(businessId: string, id: string) {
