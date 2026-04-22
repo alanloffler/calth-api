@@ -1,23 +1,31 @@
-import { InjectRepository } from "@nestjs/typeorm";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
-import { Repository } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
+import { QueryFailedError, Repository } from "typeorm";
 
+import { ApiResponse } from "@common/helpers/api-response.helper";
 import { BlockedDay } from "@blocked-days/entities/blocked-day.entity";
 import { CreateBlockedDayDto } from "@blocked-days/dto/create-blocked-day.dto";
 import { UpdateBlockedDayDto } from "@blocked-days/dto/update-blocked-day.dto";
-import { ApiResponse } from "@common/helpers/api-response.helper";
 
 @Injectable()
 export class BlockedDaysService {
   constructor(@InjectRepository(BlockedDay) private readonly blockedDayRepository: Repository<BlockedDay>) {}
 
   async create(businessId: string, createBlockedDayDto: CreateBlockedDayDto): Promise<ApiResponse<BlockedDay>> {
-    const blockedDay = this.blockedDayRepository.create({ ...createBlockedDayDto, businessId });
-    const savedBlockedDay = await this.blockedDayRepository.save(blockedDay);
-    if (!savedBlockedDay) throw new HttpException("Error al crear día bloqueado", HttpStatus.INTERNAL_SERVER_ERROR);
-    // TODO: throw custom exception on duplicated blocked day
+    try {
+      const blockedDay = this.blockedDayRepository.create({ ...createBlockedDayDto, businessId });
+      const savedBlockedDay = await this.blockedDayRepository.save(blockedDay);
 
-    return ApiResponse.created<BlockedDay>("Día bloqueado creado", savedBlockedDay);
+      return ApiResponse.created<BlockedDay>("Día bloqueado creado", savedBlockedDay);
+    } catch (error) {
+      if (error instanceof QueryFailedError) {
+        const pgError = error as any;
+        if (pgError.code === "23505") {
+          throw new HttpException("El día bloqueado ya existe", HttpStatus.CONFLICT);
+        }
+      }
+      throw new HttpException("Error al crear el día bloqueado", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async findAll(businessId: string, professionalId: string): Promise<ApiResponse<BlockedDay[]>> {
