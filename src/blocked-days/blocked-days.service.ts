@@ -14,15 +14,17 @@ export class BlockedDaysService {
   async create(businessId: string, createBlockedDayDto: CreateBlockedDayDto): Promise<ApiResponse<BlockedDay>> {
     const blockedDay = this.blockedDayRepository.create({ ...createBlockedDayDto, businessId });
     const savedBlockedDay = await this.blockedDayRepository.save(blockedDay);
-
     if (!savedBlockedDay) throw new HttpException("Error al crear día bloqueado", HttpStatus.INTERNAL_SERVER_ERROR);
     // TODO: throw custom exception on duplicated blocked day
 
     return ApiResponse.created<BlockedDay>("Día bloqueado creado", savedBlockedDay);
   }
 
-  async findOne(businessId: string, id: string) {
-    return `This action returns blockedDay #${id} from business #${businessId}`;
+  async findAll(businessId: string, professionalId: string): Promise<ApiResponse<BlockedDay[]>> {
+    const blockedDays = await this.blockedDayRepository.find({ where: { businessId, professionalId } });
+    if (!blockedDays) throw new HttpException("Días bloqueados no encontrados", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<BlockedDay[]>("Días bloqueados encontrados", blockedDays);
   }
 
   async update(businessId: string, id: string, updateBlockedDayDto: UpdateBlockedDayDto) {
