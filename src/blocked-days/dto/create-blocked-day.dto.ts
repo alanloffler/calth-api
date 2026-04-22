@@ -19,10 +19,6 @@ export class CreateBlockedDayDto {
   @IsNotEmpty({ message: "La razón es obligatoria" })
   reason: string;
 
-  @IsUUID(4, { message: "El id del negocio debe ser un UUID" })
-  @IsNotEmpty({ message: "El id del negocio es obligatorio" })
-  businessId: string;
-
   @IsUUID(4, { message: "El id del profesional debe ser un UUID" })
   @IsNotEmpty({ message: "El id del profesional es obligatorio" })
   professionalId: string;
