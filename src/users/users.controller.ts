@@ -135,6 +135,13 @@ export class UsersController {
     return this.usersService.findAdmin(businessId, id);
   }
 
+  // Find admin soft removed
+  @RequiredPermissions("admin-view")
+  @Get(":id/admin/profile/soft")
+  findAdminSoftRemoved(@BusinessId() businessId: string, @Param("id") id: string) {
+    return this.usersService.findAdminSoftRemoved(businessId, id);
+  }
+
   // Find patient soft removed with profile
   @RequiredPermissions("patient-view")
   @Get(":id/patient/profile/soft")
