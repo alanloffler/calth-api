@@ -128,6 +128,13 @@ export class UsersController {
     return this.usersService.findAll(role, businessId);
   }
 
+  // Find admin
+  @RequiredPermissions("admin-view")
+  @Get(":id/admin/profile")
+  findAdmin(@BusinessId() businessId: string, @Param("id") id: string) {
+    return this.usersService.findAdmin(businessId, id);
+  }
+
   // Find patient soft removed with profile
   @RequiredPermissions("patient-view")
   @Get(":id/patient/profile/soft")
