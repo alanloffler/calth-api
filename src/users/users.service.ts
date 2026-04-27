@@ -174,14 +174,29 @@ export class UsersService {
     return ApiResponse.success<User>("Usuario encontrado", user);
   }
 
-  async findAdmin(id: string, businessId: string): Promise<ApiResponse<User>> {
+  async findAdmin(businessId: string, id: string): Promise<ApiResponse<User>> {
+    console.log("admin: ", id);
     const user = await this.userRepository
       .createQueryBuilder("user")
       .leftJoinAndSelect("user.role", "role")
-      .leftJoinAndSelect("user.professionalProfile", "profile")
-      .select([...USER_SELECT, ...USER_ROLE_SELECT, ...PROFESSIONAL_PROFILE_SELECT])
+      .select([...USER_SELECT, ...USER_ROLE_SELECT])
       .where("user.businessId = :businessId", { businessId })
       .andWhere("user.id = :id", { id })
+      .getOne();
+    if (!user) throw new HttpException("Usuario no encontrado", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<User>("Usuario encontrado", user);
+  }
+
+  async findAdminSoftRemoved(businessId: string, id: string): Promise<ApiResponse<User>> {
+    console.log("admin: ", id);
+    const user = await this.userRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.role", "role")
+      .select([...USER_SELECT, ...USER_ROLE_SELECT])
+      .where("user.businessId = :businessId", { businessId })
+      .andWhere("user.id = :id", { id })
+      .withDeleted()
       .getOne();
     if (!user) throw new HttpException("Usuario no encontrado", HttpStatus.NOT_FOUND);
 
