@@ -174,6 +174,20 @@ export class UsersService {
     return ApiResponse.success<User>("Usuario encontrado", user);
   }
 
+  async findAdmin(id: string, businessId: string): Promise<ApiResponse<User>> {
+    const user = await this.userRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.role", "role")
+      .leftJoinAndSelect("user.professionalProfile", "profile")
+      .select([...USER_SELECT, ...USER_ROLE_SELECT, ...PROFESSIONAL_PROFILE_SELECT])
+      .where("user.businessId = :businessId", { businessId })
+      .andWhere("user.id = :id", { id })
+      .getOne();
+    if (!user) throw new HttpException("Usuario no encontrado", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<User>("Usuario encontrado", user);
+  }
+
   async findPatientWithHistory(businessId: string, id: string): Promise<ApiResponse<User>> {
     const user = await this.userRepository
       .createQueryBuilder("user")
