@@ -363,9 +363,9 @@ export class UsersService {
     return ApiResponse.success<User>("Paciente encontrado", user);
   }
 
-  // TODO: maybe remove after implement updatePatient
-  // DO NOT REMOVE: used on update user own profile
-  async update(id: string, businessId: string, updateUserDto: UpdateUserDto) {
+  // Implemented on admin update
+  async update(businessId: string, id: string, updateUserDto: UpdateUserDto) {
+    console.log(updateUserDto);
     const user = await this.userRepository.findOne({
       where: { businessId, id },
     });
