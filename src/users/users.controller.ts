@@ -212,6 +212,16 @@ export class UsersController {
     return this.restoreProfessionalUseCase.execute(id, businessId);
   }
 
+  @RequiredPermissions("admin-update")
+  @Patch(":id/admin")
+  updateAdmin(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @BusinessId() businessId: string,
+  ) {
+    return this.usersService.update(businessId, id, updateUserDto);
+  }
+
   @RequiredPermissions("patient-update")
   @Patch(":id/patient")
   updatePatient(
