@@ -47,6 +47,11 @@ export class RolesController {
     return this.rolesService.findOne(id);
   }
 
+  @Get("/value/:id")
+  findIdByValue(@Param("value") value: string) {
+    return this.rolesService.findIdByValue(value);
+  }
+
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-restore")
   @Patch(":id/restore")
