@@ -102,28 +102,30 @@ export class RolesService {
     return ApiResponse.success<Role[]>("Roles encontrados", roles);
   }
 
-  async findOne(id: string): Promise<ApiResponse<Role>> {
+  async findOne(req: IRequest, id: string): Promise<ApiResponse<Role>> {
     const role = await this.roleRepository.findOne({
       where: { id },
       relations: ["users", "rolePermissions", "rolePermissions.permission"],
     });
-    if (!role) throw new HttpException("Rol no encontrado", HttpStatus.NOT_FOUND);
+    this.assertVisible(role, req);
 
     return ApiResponse.success<Role>("Rol encontrado", role);
   }
 
-  async findOneSoftRemoved(id: string): Promise<ApiResponse<Role>> {
+  async findOneSoftRemoved(req: IRequest, id: string): Promise<ApiResponse<Role>> {
     const role = await this.roleRepository.findOne({
       where: { id },
       relations: ["users", "rolePermissions", "rolePermissions.permission"],
       withDeleted: true,
     });
-    if (!role) throw new HttpException("Rol no encontrado", HttpStatus.NOT_FOUND);
+    this.assertVisible(role, req);
 
     return ApiResponse.success<Role>("Rol encontrado", role);
   }
 
   async findIdByValue(value: string): Promise<ApiResponse<string>> {
+    if (value === ERole.SUPERADMIN) throw new HttpException("Rol no encontrado", HttpStatus.NOT_FOUND);
+
     const role = await this.roleRepository.findOne({
       where: { value },
     });
@@ -132,8 +134,10 @@ export class RolesService {
     return ApiResponse.success<string>("Rol encontrado", role.id);
   }
 
-  async update(id: string, updateRoleDto: UpdateRoleDto): Promise<ApiResponse<Role>> {
+  async update(req: IRequest, id: string, updateRoleDto: UpdateRoleDto): Promise<ApiResponse<Role>> {
     const roleToUpdate = await this.findRoleById(id);
+    this.assertVisible(roleToUpdate, req);
+
     const { value, permissions } = updateRoleDto;
     if (value && value !== roleToUpdate.value && (await this.roleAlreadyExists(value))) {
       throw new HttpException("El rol ya existe. No puedes repetirlo", HttpStatus.BAD_REQUEST);
@@ -192,11 +196,13 @@ export class RolesService {
     }
   }
 
-  async remove(id: string): Promise<ApiResponse<Role>> {
+  async remove(req: IRequest, id: string): Promise<ApiResponse<Role>> {
     const role = await this.roleRepository.findOne({
       where: { id },
       relations: ["users"],
     });
+    this.assertVisible(role, req);
+
     if (role && role.users.length > 0) {
       throw new HttpException(
         `${role.users.length} ${role.users.length > 1 ? "usuarios tienen" : "usuario tiene"} este rol. No puedes eliminar un rol con usuarios`,
@@ -204,9 +210,7 @@ export class RolesService {
       );
     }
 
-    const roleToRemove = await this.findRoleById(id);
-
-    const result = await this.roleRepository.remove(roleToRemove);
+    const result = await this.roleRepository.remove(role);
     if (!result) throw new HttpException("Error al eliminar rol", HttpStatus.BAD_REQUEST);
 
     await this.permissionsCacheService.invalidateRolePermissions(id);
@@ -214,8 +218,9 @@ export class RolesService {
     return ApiResponse.success<Role>("Rol eliminado", result);
   }
 
-  async softRemove(id: string): Promise<ApiResponse<Role>> {
+  async softRemove(req: IRequest, id: string): Promise<ApiResponse<Role>> {
     const roleToRemove = await this.findRoleById(id);
+    this.assertVisible(roleToRemove, req);
 
     const result = await this.roleRepository.softRemove(roleToRemove);
     if (!result) throw new HttpException("Error al eliminar rol", HttpStatus.BAD_REQUEST);
@@ -225,13 +230,12 @@ export class RolesService {
     return ApiResponse.removed<Role>("Rol eliminado", result);
   }
 
-  async restore(id: string): Promise<ApiResponse<Role>> {
+  async restore(req: IRequest, id: string): Promise<ApiResponse<Role>> {
     const roleToRestore = await this.roleRepository.findOne({
       where: { id },
       withDeleted: true,
     });
-
-    if (!roleToRestore) throw new HttpException("Rol no encontrado", HttpStatus.NOT_FOUND);
+    this.assertVisible(roleToRestore, req);
 
     const result = await this.roleRepository.restore(roleToRestore.id);
     if (!result) throw new HttpException("Error al restaurar rol", HttpStatus.BAD_REQUEST);
@@ -256,5 +260,11 @@ export class RolesService {
     if (!role) throw new HttpException("Rol no encontrado", HttpStatus.NOT_FOUND);
 
     return role;
+  }
+
+  private assertVisible(role: Role | null, req: IRequest): asserts role is Role {
+    if (!role || (role.value === ERole.SUPERADMIN && !req.user.isSuperAdmin)) {
+      throw new HttpException("Rol no encontrado", HttpStatus.NOT_FOUND);
+    }
   }
 }
