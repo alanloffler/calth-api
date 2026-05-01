@@ -5,7 +5,6 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 
 import type { IPayload } from "@auth/interfaces/payload.interface";
-import { User } from "@users/entities/user.entity";
 import { UsersService } from "@users/users.service";
 
 @Injectable()
@@ -30,13 +29,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: IPayload) {
-    const user = await this.usersService.findOne(payload.id, payload.businessId);
+    const user = payload.isSuperAdmin
+      ? await this.usersService.findOneGlobalById(payload.id)
+      : await this.usersService.findOne(payload.id, payload.businessId);
     if (!user) throw new HttpException("Usuario no encontrado", HttpStatus.UNAUTHORIZED);
 
     return {
-      businessId: (user.data as User)?.businessId,
+      businessId: payload.businessId,
       id: user.data?.id,
       email: user.data?.email,
+      isSuperAdmin: payload.isSuperAdmin,
       role: user.data?.role.value,
       roleId: user.data?.role.id,
       type: payload.type,
