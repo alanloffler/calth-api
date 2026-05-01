@@ -8,59 +8,67 @@ import { RequiredPermissions } from "@auth/decorators/required-permissions.decor
 import { RolesService } from "@roles/roles.service";
 import { UpdateRoleDto } from "@roles/dto/update-role.dto";
 
-@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller("roles")
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-create")
   @Post()
   create(@Body() createRoleDto: CreateRoleDto) {
     return this.rolesService.create(createRoleDto);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-view")
   @Get()
   findAll(@Request() req: IRequest) {
     return this.rolesService.findAll(req);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-view")
   @Get("soft")
   findAllSoftRemoved() {
     return this.rolesService.findAllSoftRemoved();
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-view")
   @Get(":id/soft")
   findOneSoftRemoved(@Param("id", ParseUUIDPipe) id: string) {
     return this.rolesService.findOneSoftRemoved(id);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-view")
   @Get(":id")
   findOne(@Param("id", ParseUUIDPipe) id: string) {
     return this.rolesService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-restore")
   @Patch(":id/restore")
   restore(@Param("id", ParseUUIDPipe) id: string) {
     return this.rolesService.restore(id);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-update")
   @Patch(":id")
   update(@Param("id", ParseUUIDPipe) id: string, @Body() updateRoleDto: UpdateRoleDto) {
     return this.rolesService.update(id, updateRoleDto);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-delete")
   @Delete(":id/soft")
   softRemove(@Param("id", ParseUUIDPipe) id: string) {
     return this.rolesService.softRemove(id);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-delete-hard")
   @Delete(":id")
   remove(@Param("id", ParseUUIDPipe) id: string) {
