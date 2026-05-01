@@ -83,7 +83,7 @@ export class RolesService {
 
   async findAll(req: IRequest): Promise<ApiResponse<Role[]>> {
     const roles = await this.roleRepository.find({
-      where: req.user.role !== ERole.SUPERADMIN ? { value: Not(ERole.SUPERADMIN) } : {},
+      where: req.user.isSuperAdmin ? {} : { value: Not(ERole.SUPERADMIN) },
       order: { name: "ASC" },
     });
     if (!roles) throw new HttpException("Roles no encontrados", HttpStatus.NOT_FOUND);
@@ -91,8 +91,12 @@ export class RolesService {
     return ApiResponse.success<Role[]>("Roles encontrados", roles);
   }
 
-  async findAllSoftRemoved(): Promise<ApiResponse<Role[]>> {
-    const roles = await this.roleRepository.find({ order: { name: "ASC" }, withDeleted: true });
+  async findAllSoftRemoved(req: IRequest): Promise<ApiResponse<Role[]>> {
+    const roles = await this.roleRepository.find({
+      where: req.user.isSuperAdmin ? {} : { value: Not(ERole.SUPERADMIN) },
+      order: { name: "ASC" },
+      withDeleted: true,
+    });
     if (!roles) throw new HttpException("Roles no encontrados", HttpStatus.NOT_FOUND);
 
     return ApiResponse.success<Role[]>("Roles encontrados", roles);
