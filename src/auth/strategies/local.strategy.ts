@@ -29,18 +29,34 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     const business = await this.businessService.findBySlug(slug);
     if (!business) throw new HttpException("Tenant no encontrado", HttpStatus.BAD_REQUEST);
 
+    const superAdmin = await this.userService.findSuperAdminByEmail(email);
+    if (superAdmin) {
+      const isPasswordValid = await bcrypt.compare(password, superAdmin.password);
+      if (!isPasswordValid) throw new HttpException("Credenciales inválidas", HttpStatus.UNAUTHORIZED);
+      if (!superAdmin.role) throw new HttpException("El usuario posee un rol inactivo", HttpStatus.FORBIDDEN);
+
+      return {
+        businessId: business.id,
+        email: superAdmin.email,
+        id: superAdmin.id,
+        isSuperAdmin: true,
+        role: superAdmin.role.value,
+        roleId: superAdmin.role.id,
+      };
+    }
+
     const user = await this.userService.findOneByEmail(email, business.id);
     if (!user) throw new HttpException("Credenciales inválidas", HttpStatus.UNAUTHORIZED);
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) throw new HttpException("Credenciales inválidas", HttpStatus.UNAUTHORIZED);
-
     if (!user.role) throw new HttpException("El usuario posee un rol inactivo", HttpStatus.FORBIDDEN);
 
     return {
       businessId: user.businessId,
-      id: user.id,
       email: user.email,
+      id: user.id,
+      isSuperAdmin: false,
       role: user.role.value,
       roleId: user.role.id,
     };
