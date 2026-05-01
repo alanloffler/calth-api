@@ -17,12 +17,14 @@ export class RolesGuard implements CanActivate {
 
     const { user } = context.switchToHttp().getRequest();
 
+    if (user?.isSuperAdmin) return true;
+
     const roleExists: boolean = requiredRoles.some((role) => user.role === role);
 
     if (!roleExists) {
       throw new HttpException(`El usuario ${user.email} no posee un rol permitido`, HttpStatus.FORBIDDEN);
-    } else {
-      return true;
     }
+
+    return true;
   }
 }
