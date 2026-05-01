@@ -119,6 +119,15 @@ export class RolesService {
     return ApiResponse.success<Role>("Rol encontrado", role);
   }
 
+  async findIdByValue(value: string): Promise<ApiResponse<string>> {
+    const role = await this.roleRepository.findOne({
+      where: { value },
+    });
+    if (!role) throw new HttpException("Rol no encontrado", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<string>("Rol encontrado", role.id);
+  }
+
   async update(id: string, updateRoleDto: UpdateRoleDto): Promise<ApiResponse<Role>> {
     const roleToUpdate = await this.findRoleById(id);
     const { value, permissions } = updateRoleDto;
