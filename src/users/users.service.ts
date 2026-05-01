@@ -472,6 +472,70 @@ export class UsersService {
     return user;
   }
 
+  public async findSuperAdminByEmail(email: string): Promise<User | null> {
+    const user = await this.userRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.role", "role")
+      .where("user.email = :email", { email })
+      .andWhere("role.value = :role", { role: ERole.SUPERADMIN })
+      .getOne();
+    if (!user) return null;
+
+    return user;
+  }
+
+  // Superadmin related services
+  async findOneGlobalById(id: string): Promise<ApiResponse<User>> {
+    const user = await this.userRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.role", "role")
+      .select([...USER_SELECT, ...USER_ROLE_SELECT])
+      .where("user.id = :id", { id })
+      .withDeleted()
+      .getOne();
+    if (!user) throw new HttpException("Usuario no encontrado", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<User>("Usuario encontrado", user);
+  }
+
+  async findOneWithTokenGlobal(id: string): Promise<ApiResponse<User>> {
+    const user = await this.userRepository
+      .createQueryBuilder("user")
+      .leftJoinAndSelect("user.role", "role")
+      .leftJoinAndSelect("user.professionalProfile", "profile")
+      .select([...USER_SELECT, "user.refreshToken"])
+      .where("user.id = :id", { id })
+      .getOne();
+    if (!user) throw new HttpException("Usuario no encontrado", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<User>("Usuario encontrado", user);
+  }
+
+  public async getUserGlobal(id: string): Promise<User | null> {
+    const user = await this.userRepository
+      .createQueryBuilder("user")
+      .leftJoin("user.role", "role")
+      .leftJoin("role.rolePermissions", "rolePermissions")
+      .leftJoin("rolePermissions.permission", "permission")
+      .addSelect([
+        "role.id",
+        "role.name",
+        "role.value",
+        "rolePermissions.roleId",
+        "rolePermissions.permissionId",
+        "permission.id",
+        "permission.actionKey",
+      ])
+      .where("user.id = :id", { id })
+      .getOne();
+
+    return user;
+  }
+
+  public async setRefreshToken(id: string, refreshToken: string): Promise<void> {
+    await this.userRepository.update(id, { refreshToken });
+  }
+
   // Used in auth.service, there is managed error
   public async getUser(id: string, businessId: string): Promise<User | null> {
     const user = await this.userRepository
