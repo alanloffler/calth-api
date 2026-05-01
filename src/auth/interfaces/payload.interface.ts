@@ -4,6 +4,7 @@ export interface IPayload {
   exp?: number;
   iat?: number;
   id: string;
+  isSuperAdmin: boolean;
   role: string;
   roleId: string;
   type?: string;
