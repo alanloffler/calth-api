@@ -21,6 +21,7 @@ export class AuthService {
     const payload = {
       businessId: req.user.businessId,
       id: req.user.id,
+      isSuperAdmin: req.user.isSuperAdmin,
       email: req.user.email,
       role: req.user.role,
       roleId: req.user.roleId,
@@ -28,7 +29,7 @@ export class AuthService {
 
     const tokens = await this.getTokens(payload, true);
 
-    await this.updateRefreshToken(payload.id, tokens.refreshToken!, payload.businessId);
+    await this.updateRefreshToken(payload.id, tokens.refreshToken!);
 
     this.setTokenCookie(res, tokens);
 
@@ -87,11 +88,8 @@ export class AuthService {
     }
   }
 
-  async updateRefreshToken(id: string, refreshToken: string, businessId: string): Promise<void> {
-    if (!businessId) throw new HttpException("BusinessId requerido", HttpStatus.BAD_REQUEST);
-
-    const updateToken = await this.usersService.update(id, businessId, { refreshToken });
-    if (!updateToken) throw new HttpException("Error al actualizar token", HttpStatus.BAD_REQUEST);
+  async updateRefreshToken(id: string, refreshToken: string): Promise<void> {
+    await this.usersService.setRefreshToken(id, refreshToken);
   }
 
   async signOut(payload: IPayload, res: Response): Promise<ApiResponse<null>> {
@@ -102,8 +100,11 @@ export class AuthService {
   }
 
   async refreshToken(payload: IPayload, refreshToken: string, res: Response) {
-    const user = await this.usersService.findOneWithToken(payload.id, payload.businessId);
-    let storedRefreshToken = user?.data?.refreshToken;
+    const user = payload.isSuperAdmin
+      ? await this.usersService.findOneWithTokenGlobal(payload.id)
+      : await this.usersService.findOneWithToken(payload.id, payload.businessId);
+
+    const storedRefreshToken = user?.data?.refreshToken;
     if (!storedRefreshToken) throw new HttpException("Token de actualización no existe", HttpStatus.BAD_REQUEST);
 
     if (storedRefreshToken !== refreshToken)
@@ -114,7 +115,7 @@ export class AuthService {
     const tokens = await this.getTokens(payload, shouldRotate);
 
     if (shouldRotate) {
-      await this.updateRefreshToken(payload.id, tokens.refreshToken!, payload.businessId);
+      await this.updateRefreshToken(payload.id, tokens.refreshToken!);
     }
 
     this.setTokenCookie(res, {
@@ -129,10 +130,14 @@ export class AuthService {
   }
 
   async getMe(payload: IPayload) {
-    const user = await this.usersService.getUser(payload.id, payload.businessId);
+    const user = payload.isSuperAdmin
+      ? await this.usersService.getUserGlobal(payload.id)
+      : await this.usersService.getUser(payload.id, payload.businessId);
     if (!user) throw new HttpException("Usuario no encontrado", HttpStatus.NOT_FOUND);
 
-    return ApiResponse.success("Usuario encontrado", user);
+    if (payload.isSuperAdmin) user.businessId = payload.businessId;
+
+    return ApiResponse.success("Usuario encontrado", { ...user, isSuperAdmin: payload.isSuperAdmin });
   }
 
   private setTokenCookie(res: Response, tokens: IToken): void {
