@@ -29,8 +29,8 @@ export class RolesController {
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-view")
   @Get("soft")
-  findAllSoftRemoved() {
-    return this.rolesService.findAllSoftRemoved();
+  findAllSoftRemoved(@Request() req: IRequest) {
+    return this.rolesService.findAllSoftRemoved(req);
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
