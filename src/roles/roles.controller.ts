@@ -36,15 +36,15 @@ export class RolesController {
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-view")
   @Get(":id/soft")
-  findOneSoftRemoved(@Param("id", ParseUUIDPipe) id: string) {
-    return this.rolesService.findOneSoftRemoved(id);
+  findOneSoftRemoved(@Request() req: IRequest, @Param("id", ParseUUIDPipe) id: string) {
+    return this.rolesService.findOneSoftRemoved(req, id);
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-view")
   @Get(":id")
-  findOne(@Param("id", ParseUUIDPipe) id: string) {
-    return this.rolesService.findOne(id);
+  findOne(@Request() req: IRequest, @Param("id", ParseUUIDPipe) id: string) {
+    return this.rolesService.findOne(req, id);
   }
 
   @Get("/value/:id")
@@ -55,28 +55,28 @@ export class RolesController {
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-restore")
   @Patch(":id/restore")
-  restore(@Param("id", ParseUUIDPipe) id: string) {
-    return this.rolesService.restore(id);
+  restore(@Request() req: IRequest, @Param("id", ParseUUIDPipe) id: string) {
+    return this.rolesService.restore(req, id);
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-update")
   @Patch(":id")
-  update(@Param("id", ParseUUIDPipe) id: string, @Body() updateRoleDto: UpdateRoleDto) {
-    return this.rolesService.update(id, updateRoleDto);
+  update(@Request() req: IRequest, @Param("id", ParseUUIDPipe) id: string, @Body() updateRoleDto: UpdateRoleDto) {
+    return this.rolesService.update(req, id, updateRoleDto);
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-delete")
   @Delete(":id/soft")
-  softRemove(@Param("id", ParseUUIDPipe) id: string) {
-    return this.rolesService.softRemove(id);
+  softRemove(@Request() req: IRequest, @Param("id", ParseUUIDPipe) id: string) {
+    return this.rolesService.softRemove(req, id);
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequiredPermissions("roles-delete-hard")
   @Delete(":id")
-  remove(@Param("id", ParseUUIDPipe) id: string) {
-    return this.rolesService.remove(id);
+  remove(@Request() req: IRequest, @Param("id", ParseUUIDPipe) id: string) {
+    return this.rolesService.remove(req, id);
   }
 }
