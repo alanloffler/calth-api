@@ -7,6 +7,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { AuthModule } from "@auth/auth.module";
 import { BlockedDaysModule } from "@blocked-days/blocked-days.module";
 import { BusinessModule } from "@business/business.module";
+import { BusinessRolePermissionsModule } from "@business-role-permissions/business-role-permissions.module";
 import { CacheConfigModule } from "@config/cache-config.module";
 import { EventsModule } from "@events/events.module";
 import { MedicalHistoryModule } from "@medical-history/medical-history.module";
@@ -43,6 +44,7 @@ import { typeOrmConfig } from "@config/typeorm.config";
     AuthModule,
     BlockedDaysModule,
     BusinessModule,
+    BusinessRolePermissionsModule,
     EventsModule,
     MedicalHistoryModule,
     NotificationsModule,
