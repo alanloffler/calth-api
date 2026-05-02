@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
+import { BusinessRolePermission } from "@business-role-permissions/entities/business-role-permission.entity";
 import { RolePermission } from "@roles/entities/role-permission.entity";
 import { User } from "@users/entities/user.entity";
 
@@ -32,6 +33,9 @@ export class Role {
 
   @OneToMany(() => RolePermission, (rp) => rp.role, { cascade: false })
   rolePermissions: RolePermission[];
+
+  @OneToMany(() => BusinessRolePermission, (brp) => brp.role)
+  businessPermissions: BusinessRolePermission[];
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
