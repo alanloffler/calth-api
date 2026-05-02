@@ -8,7 +8,7 @@ import { UpsertOverrideDto } from "@business-role-permissions/dto/upsert-overrid
 import { RequiredPermissions } from "@auth/decorators/required-permissions.decorator";
 
 @UseGuards(JwtAuthGuard, PermissionsGuard)
-@Controller("roles-overrides")
+@Controller("role-overrides")
 export class BusinessRolePermissionsController {
   constructor(private readonly businessRolePermissionsService: BusinessRolePermissionsService) {}
 
