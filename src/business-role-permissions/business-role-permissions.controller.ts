@@ -1,35 +1,40 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from "@nestjs/common";
+import { Controller, Get, Body, Param, Delete, Put, ParseUUIDPipe } from "@nestjs/common";
 
+import { BusinessId } from "@common/decorators/business-id.decorator";
 import { BusinessRolePermissionsService } from "@business-role-permissions/business-role-permissions.service";
-import { CreateBusinessRolePermissionDto } from "@business-role-permissions/dto/create-business-role-permission.dto";
-import { UpdateBusinessRolePermissionDto } from "@business-role-permissions/dto/update-business-role-permission.dto";
+import { UpsertOverrideDto } from "@business-role-permissions/dto/upsert-override.dto";
 
-@Controller("business-role-permissions")
+@Controller("roles-overrides")
 export class BusinessRolePermissionsController {
   constructor(private readonly businessRolePermissionsService: BusinessRolePermissionsService) {}
 
-  @Post()
-  create(@Body() createBusinessRolePermissionDto: CreateBusinessRolePermissionDto) {
-    return this.businessRolePermissionsService.create(createBusinessRolePermissionDto);
+  @Put(":roleId/permissions/:permissionId")
+  upsert(
+    @BusinessId(ParseUUIDPipe) businessId: string,
+    @Param("roleId", ParseUUIDPipe) roleId: string,
+    @Param("permissionId", ParseUUIDPipe) permissionId: string,
+    @Body() upsertDto: UpsertOverrideDto,
+  ) {
+    return this.businessRolePermissionsService.upsert(businessId, roleId, permissionId, upsertDto);
   }
 
-  @Get()
-  findAll() {
-    return this.businessRolePermissionsService.findAll();
+  @Get(":roleId/overrides")
+  listOverrides(@Param("roleId") roleId: string) {
+    return this.businessRolePermissionsService.listOverrides(roleId);
   }
 
-  @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.businessRolePermissionsService.findOne(+id);
+  @Get(":roleId")
+  listEffective(@Param("roleId") roleId: string) {
+    return this.businessRolePermissionsService.listEffective(roleId);
   }
 
-  @Patch(":id")
-  update(@Param("id") id: string, @Body() updateBusinessRolePermissionDto: UpdateBusinessRolePermissionDto) {
-    return this.businessRolePermissionsService.update(+id, updateBusinessRolePermissionDto);
+  @Delete(":roleId/permissions/:permissionId")
+  resetOne(@Param("roleId") roleId: string, @Param("permissionId") permissionId: string) {
+    return this.businessRolePermissionsService.resetOne(roleId, permissionId);
   }
 
-  @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.businessRolePermissionsService.remove(+id);
+  @Delete(":roleId")
+  resetAll(@Param("roleId") roleId: string) {
+    return this.businessRolePermissionsService.resetAll(roleId);
   }
 }
