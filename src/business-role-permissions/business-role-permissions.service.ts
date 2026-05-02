@@ -1,27 +1,47 @@
-import { Injectable } from "@nestjs/common";
+import { DataSource } from "typeorm";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 
-import { CreateBusinessRolePermissionDto } from "@business-role-permissions/dto/create-business-role-permission.dto";
-import { UpdateBusinessRolePermissionDto } from "@business-role-permissions/dto/update-business-role-permission.dto";
+import { ApiResponse } from "@common/helpers/api-response.helper";
+import { BusinessRolePermission } from "./entities/business-role-permission.entity";
+import { UpsertOverrideDto } from "@business-role-permissions/dto/upsert-override.dto";
 
 @Injectable()
 export class BusinessRolePermissionsService {
-  create(createBusinessRolePermissionDto: CreateBusinessRolePermissionDto) {
-    return "This action adds a new businessRolePermission";
+  constructor(private readonly dataSource: DataSource) {}
+
+  async upsert(businessId: string, roleId: string, permissionId: string, upsertDto: UpsertOverrideDto) {
+    const result = await this.dataSource
+      .createQueryBuilder()
+      .insert()
+      .into(BusinessRolePermission)
+      .values({
+        businessId,
+        roleId,
+        permissionId,
+        effect: upsertDto.effect,
+      })
+      .orUpdate(["effect", "updated_at"], ["business_id", "role_id", "permission_id"])
+      .returning("*")
+      .execute();
+
+    if (!result) throw new HttpException("Error al guardar override", HttpStatus.INTERNAL_SERVER_ERROR);
+
+    return ApiResponse.success<BusinessRolePermission>("Override guardado", result.raw[0]);
   }
 
-  findAll() {
-    return `This action returns all businessRolePermissions`;
+  async listEffective(roleId: string) {
+    return `This action list effective overrides`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} businessRolePermission`;
+  async listOverrides(id: string) {
+    return `This action list overrides`;
   }
 
-  update(id: number, updateBusinessRolePermissionDto: UpdateBusinessRolePermissionDto) {
-    return `This action updates a #${id} businessRolePermission`;
+  async resetOne(roleId: string, permissionId: string) {
+    return `This action reset one businessRolePermission`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} businessRolePermission`;
+  async resetAll(roleId: string) {
+    return `This action reset all businessRolePermission`;
   }
 }
