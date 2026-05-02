@@ -19,22 +19,26 @@ export class BusinessRolePermissionsController {
   }
 
   @Get(":roleId/overrides")
-  listOverrides(@Param("roleId") roleId: string) {
-    return this.businessRolePermissionsService.listOverrides(roleId);
+  listOverrides(@BusinessId(ParseUUIDPipe) businessId: string, @Param("roleId", ParseUUIDPipe) roleId: string) {
+    return this.businessRolePermissionsService.listOverrides(businessId, roleId);
   }
 
   @Get(":roleId")
-  listEffective(@Param("roleId") roleId: string) {
-    return this.businessRolePermissionsService.listEffective(roleId);
+  listEffective(@BusinessId(ParseUUIDPipe) businessId: string, @Param("roleId", ParseUUIDPipe) roleId: string) {
+    return this.businessRolePermissionsService.listEffective(businessId, roleId);
   }
 
   @Delete(":roleId/permissions/:permissionId")
-  resetOne(@Param("roleId") roleId: string, @Param("permissionId") permissionId: string) {
-    return this.businessRolePermissionsService.resetOne(roleId, permissionId);
+  resetOne(
+    @BusinessId(ParseUUIDPipe) businessId: string,
+    @Param("roleId", ParseUUIDPipe) roleId: string,
+    @Param("permissionId", ParseUUIDPipe) permissionId: string,
+  ) {
+    return this.businessRolePermissionsService.resetOne(businessId, roleId, permissionId);
   }
 
   @Delete(":roleId")
-  resetAll(@Param("roleId") roleId: string) {
-    return this.businessRolePermissionsService.resetAll(roleId);
+  resetAll(@BusinessId(ParseUUIDPipe) businessId: string, @Param("roleId", ParseUUIDPipe) roleId: string) {
+    return this.businessRolePermissionsService.resetAll(businessId, roleId);
   }
 }
