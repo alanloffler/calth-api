@@ -8,6 +8,7 @@ import {
 } from "@business-role-permissions/entities/business-role-permission.entity";
 import { EffectivePermissionDto } from "./dto/effective-permission.dto";
 import { OverrideDto } from "@business-role-permissions/dto/override.dto";
+import { PermissionsCacheService } from "@permissions/permissions-cache.service";
 import { UpsertOverrideDto } from "@business-role-permissions/dto/upsert-override.dto";
 
 interface EffectiveRow {
@@ -33,7 +34,10 @@ interface OverrideRow {
 
 @Injectable()
 export class BusinessRolePermissionsService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly permissionsCacheService: PermissionsCacheService,
+  ) {}
 
   async upsert(businessId: string, roleId: string, permissionId: string, upsertDto: UpsertOverrideDto) {
     const result = await this.dataSource
@@ -51,6 +55,8 @@ export class BusinessRolePermissionsService {
       .execute();
 
     if (!result) throw new HttpException("Error al guardar override", HttpStatus.INTERNAL_SERVER_ERROR);
+
+    await this.permissionsCacheService.invalidateEffectivePermissions(businessId, roleId);
 
     return ApiResponse.success<BusinessRolePermission>("Override guardado", result.raw[0]);
   }
@@ -74,8 +80,8 @@ export class BusinessRolePermissionsService {
             ),
             false
           )::boolean AS is_effective
-        FROM permissions p
-        LEFT JOIN role_permission rp
+        FROM permission p
+        LEFT JOIN role_permissions rp
           ON rp.permission_id = p.id AND rp.role_id = $2
         LEFT JOIN business_role_permissions brp
           ON brp.permission_id = p.id AND brp.role_id = $2 AND brp.business_id = $1
@@ -111,7 +117,7 @@ export class BusinessRolePermissionsService {
           p.name,
           p.category
         FROM business_role_permissions brp
-        JOIN permissions p ON p.id = brp.permission_id
+        JOIN permission p ON p.id = brp.permission_id
         WHERE brp.business_id = $1 AND brp.role_id = $2
         ORDER BY p.category ASC, p.action_key ASC
       `,
@@ -145,6 +151,8 @@ export class BusinessRolePermissionsService {
 
     if (!result.affected) throw new HttpException("Override no encontrado", HttpStatus.NOT_FOUND);
 
+    await this.permissionsCacheService.invalidateEffectivePermissions(businessId, roleId);
+
     return ApiResponse.removed("Override eliminado");
   }
 
@@ -156,6 +164,8 @@ export class BusinessRolePermissionsService {
       .where("business_id = :businessId AND role_id = :roleId", { businessId, roleId })
       .execute();
 
+    await this.permissionsCacheService.invalidateEffectivePermissions(businessId, roleId);
+
     return ApiResponse.removed<{ deleted: number }>("Overrides eliminados", { deleted: result.affected ?? 0 });
   }
 
@@ -164,8 +174,8 @@ export class BusinessRolePermissionsService {
       `
         SELECT EXISTS (
           SELECT 1
-          FROM permissions p
-          LEFT JOIN role_permission rp
+          FROM permission p
+          LEFT JOIN role_permissions rp
             ON rp.permission_id = p.id AND rp.role_id = $2
           LEFT JOIN business_role_permissions brp
             ON brp.permission_id = p.id AND brp.role_id = $2 AND brp.business_id = $1
