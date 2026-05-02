@@ -1,18 +1,16 @@
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
 import { CanActivate, ExecutionContext, HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
+import { DataSource } from "typeorm";
 import { Reflector } from "@nestjs/core";
-import { Repository } from "typeorm";
 
 import { PERMISSIONS_KEY } from "@auth/decorators/required-permissions.decorator";
-import { Role } from "@roles/entities/role.entity";
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    @InjectRepository(Role) private roleRepository: Repository<Role>,
+    private dataSource: DataSource,
     private reflector: Reflector,
   ) {}
 
@@ -32,7 +30,13 @@ export class PermissionsGuard implements CanActivate {
       throw new HttpException("No tienes permisos para acceder a este recurso", HttpStatus.FORBIDDEN);
     }
 
-    const userPermissions = await this.getRolePermissions(user.roleId);
+    if (user.isSuperAdmin) return true;
+
+    if (!user.businessId) {
+      throw new HttpException("No tienes permisos para acceder a este recurso", HttpStatus.FORBIDDEN);
+    }
+
+    const userPermissions = await this.getEffectivePermissions(user.businessId, user.roleId);
 
     if (!userPermissions || userPermissions.length === 0) {
       throw new HttpException("Tu rol no posee permisos asignados", HttpStatus.FORBIDDEN);
@@ -55,25 +59,33 @@ export class PermissionsGuard implements CanActivate {
     return hasPermissions;
   }
 
-  private async getRolePermissions(roleId: string): Promise<string[]> {
-    const cacheKey = `role_permissions_${roleId}`;
+  private async getEffectivePermissions(businessId: string, roleId: string): Promise<string[]> {
+    const cacheKey = `effective_permissions_${businessId}_${roleId}`;
 
     let permissions: string[] = (await this.cacheManager.get(cacheKey)) as string[];
 
     if (!permissions) {
-      const role = await this.roleRepository.findOne({
-        where: { id: roleId },
-        relations: ["rolePermissions", "rolePermissions.permission"],
-      });
+      const rows: { action_key: string }[] = await this.dataSource.query(
+        `
+          SELECT p.action_key
+          FROM permissions p
+          LEFT JOIN role_permission rp
+            ON rp.permission_id = p.id AND rp.role_id = $2
+          LEFT JOIN business_role_permissions brp
+            ON brp.permission_id = p.id AND brp.role_id = $2 AND brp.business_id = $1
+          WHERE p.deleted_at IS NULL
+            AND (
+              brp.effect = 'grant'
+              OR (
+                rp.role_id IS NOT NULL
+                AND (brp.effect IS NULL OR brp.effect <> 'deny')
+              )
+            )
+        `,
+        [businessId, roleId],
+      );
 
-      if (!role || !role.rolePermissions) {
-        return [];
-      }
-
-      permissions = role.rolePermissions
-        .filter((rp) => rp.permission !== null && rp.permission.deletedAt === null)
-        .map((rp) => rp.permission?.actionKey);
-
+      permissions = rows.map((r) => r.action_key);
       await this.cacheManager.set(cacheKey, permissions);
     }
 
