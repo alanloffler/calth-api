@@ -29,7 +29,7 @@ export class ApiKeysController {
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.apiKeysService.remove(+id);
+  remove(@BusinessId(ParseUUIDPipe) businessId: string, @Param("id") id: string) {
+    return this.apiKeysService.remove(businessId, id);
   }
 }
