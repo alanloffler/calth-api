@@ -15,8 +15,8 @@ export class ApiKeysController {
   }
 
   @Get()
-  findAll() {
-    return this.apiKeysService.findAll();
+  findAll(@BusinessId(ParseUUIDPipe) businessId: string) {
+    return this.apiKeysService.findAll(businessId);
   }
 
   @Get(":id")
