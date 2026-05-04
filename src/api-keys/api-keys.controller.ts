@@ -19,14 +19,13 @@ export class ApiKeysController {
     return this.apiKeysService.findAll(businessId);
   }
 
-  @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.apiKeysService.findOne(+id);
-  }
-
   @Patch(":id")
-  update(@Param("id") id: string, @Body() updateApiKeyDto: UpdateApiKeyDto) {
-    return this.apiKeysService.update(+id, updateApiKeyDto);
+  update(
+    @BusinessId(ParseUUIDPipe) businessId: string,
+    @Param("id") id: string,
+    @Body() updateApiKeyDto: UpdateApiKeyDto,
+  ) {
+    return this.apiKeysService.update(businessId, id, updateApiKeyDto);
   }
 
   @Delete(":id")
