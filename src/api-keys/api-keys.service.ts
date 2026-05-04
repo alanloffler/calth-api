@@ -34,12 +34,12 @@ export class ApiKeysService {
     return ApiResponse.success<ApiKey[]>("API keys encontradas", apiKeys);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} apiKey`;
-  }
+  async update(businessId: string, id: string, updateApiKeyDto: UpdateApiKeyDto): Promise<ApiResponse<void>> {
+    const updatedApiKey = await this.apiKeyRepository.update({ id, businessId }, updateApiKeyDto);
+    if (!updatedApiKey) throw new HttpException("Error al actualizar API key", HttpStatus.INTERNAL_SERVER_ERROR);
+    if (updatedApiKey.affected === 0) throw new HttpException("API key no encontrada", HttpStatus.NOT_FOUND);
 
-  update(id: number, updateApiKeyDto: UpdateApiKeyDto) {
-    return `This action updates a #${id} apiKey`;
+    return ApiResponse.success<void>("API key actualizada", undefined);
   }
 
   remove(id: number) {
