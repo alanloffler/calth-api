@@ -42,7 +42,11 @@ export class ApiKeysService {
     return ApiResponse.success<void>("API key actualizada", undefined);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} apiKey`;
+  async remove(businessId: string, id: string): Promise<ApiResponse<void>> {
+    const result = await this.apiKeyRepository.delete({ id, businessId });
+    if (!result) throw new HttpException("Error al eliminar API key", HttpStatus.INTERNAL_SERVER_ERROR);
+    if (result.affected === 0) throw new HttpException("API key no encontrada", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<void>("API key eliminada", undefined);
   }
 }
