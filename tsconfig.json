@@ -24,6 +24,7 @@
     "noFallthroughCasesInSwitch": false,
     "paths": {
       "@admin/*": ["./src/admin/*"],
+      "@api-keys/*": ["./src/api-keys/*"],
       "@auth/*": ["./src/auth/*"],
       "@business/*": ["./src/business/*"],
       "@business-role-permissions/*": ["./src/business-role-permissions/*"],
