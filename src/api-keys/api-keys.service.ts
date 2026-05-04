@@ -11,7 +11,7 @@ import { UpdateApiKeyDto } from "@api-keys/dto/update-api-key.dto";
 export class ApiKeysService {
   constructor(@InjectRepository(ApiKey) private readonly apiKeyRepository: Repository<ApiKey>) {}
 
-  async create(businessId: string, createApiKeyDto: CreateApiKeyDto) {
+  async create(businessId: string, createApiKeyDto: CreateApiKeyDto): Promise<ApiResponse<ApiKey>> {
     // TODO: handle duplicated try-catch -> err 23505
     const apiKey = this.apiKeyRepository.create({
       name: createApiKeyDto.name,
@@ -23,8 +23,15 @@ export class ApiKeysService {
     return ApiResponse.created<ApiKey>("API key creada", newApiKey);
   }
 
-  findAll() {
-    return `This action returns all apiKeys`;
+  async findAll(businessId: string): Promise<ApiResponse<ApiKey[]>> {
+    console.log(businessId);
+    const apiKeys = await this.apiKeyRepository.find({
+      where: { businessId },
+      order: { name: "ASC" },
+    });
+    if (!apiKeys) throw new HttpException("Error al obtener las API keys", HttpStatus.NOT_FOUND);
+
+    return ApiResponse.success<ApiKey[]>("API keys encontradas", apiKeys);
   }
 
   findOne(id: number) {
