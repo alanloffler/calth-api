@@ -40,11 +40,18 @@ export class ApiKeysService {
   }
 
   async update(businessId: string, id: string, updateApiKeyDto: UpdateApiKeyDto): Promise<ApiResponse<void>> {
-    const updatedApiKey = await this.apiKeyRepository.update({ id, businessId }, updateApiKeyDto);
-    if (!updatedApiKey) throw new HttpException("Error al actualizar API key", HttpStatus.INTERNAL_SERVER_ERROR);
-    if (updatedApiKey.affected === 0) throw new HttpException("API key no encontrada", HttpStatus.NOT_FOUND);
+    try {
+      const updatedApiKey = await this.apiKeyRepository.update({ id, businessId }, updateApiKeyDto);
+      if (updatedApiKey.affected === 0) throw new HttpException("API key no encontrada", HttpStatus.NOT_FOUND);
 
-    return ApiResponse.success<void>("API key actualizada", undefined);
+      return ApiResponse.success<void>("API key actualizada", undefined);
+    } catch (error: any) {
+      if (error instanceof HttpException) throw error;
+      if (error?.driverError?.code === "23505") {
+        throw new HttpException("API key duplicada", HttpStatus.CONFLICT);
+      }
+      throw new HttpException("Error al actualizar API key", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async remove(businessId: string, id: string): Promise<ApiResponse<void>> {
