@@ -12,15 +12,20 @@ export class ApiKeysService {
   constructor(@InjectRepository(ApiKey) private readonly apiKeyRepository: Repository<ApiKey>) {}
 
   async create(businessId: string, createApiKeyDto: CreateApiKeyDto): Promise<ApiResponse<ApiKey>> {
-    // TODO: handle duplicated try-catch -> err 23505
-    const apiKey = this.apiKeyRepository.create({
-      name: createApiKeyDto.name,
-      key: createApiKeyDto.key,
-    });
-    const newApiKey = await this.apiKeyRepository.save({ ...apiKey, businessId });
-    if (!newApiKey) throw new HttpException("Error al crear API key", HttpStatus.INTERNAL_SERVER_ERROR);
+    try {
+      const apiKey = this.apiKeyRepository.create({
+        name: createApiKeyDto.name,
+        key: createApiKeyDto.key,
+      });
+      const newApiKey = await this.apiKeyRepository.save({ ...apiKey, businessId });
 
-    return ApiResponse.created<ApiKey>("API key creada", newApiKey);
+      return ApiResponse.created<ApiKey>("API key creada", newApiKey);
+    } catch (error: any) {
+      if (error?.driverError?.code === "23505") {
+        throw new HttpException("API key duplicada", HttpStatus.CONFLICT);
+      }
+      throw new HttpException("Error al crear API key", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async findAll(businessId: string): Promise<ApiResponse<ApiKey[]>> {
