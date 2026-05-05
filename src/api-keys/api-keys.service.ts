@@ -21,6 +21,7 @@ export class ApiKeysService {
         name: createApiKeyDto.name,
         key: this.encryptionService.encrypt(createApiKeyDto.key),
         linkedTo: createApiKeyDto.linkedTo,
+        active: createApiKeyDto.active,
       });
       const newApiKey = await this.apiKeyRepository.save({ ...apiKey, businessId });
 
