@@ -5,17 +5,21 @@ import { Repository } from "typeorm";
 import { ApiKey } from "@api-keys/entities/api-key.entity";
 import { ApiResponse } from "@common/helpers/api-response.helper";
 import { CreateApiKeyDto } from "@api-keys/dto/create-api-key.dto";
+import { EncryptionService } from "@common/services/encryption.service";
 import { UpdateApiKeyDto } from "@api-keys/dto/update-api-key.dto";
 
 @Injectable()
 export class ApiKeysService {
-  constructor(@InjectRepository(ApiKey) private readonly apiKeyRepository: Repository<ApiKey>) {}
+  constructor(
+    @InjectRepository(ApiKey) private readonly apiKeyRepository: Repository<ApiKey>,
+    private readonly encryptionService: EncryptionService,
+  ) {}
 
   async create(businessId: string, createApiKeyDto: CreateApiKeyDto): Promise<ApiResponse<ApiKey>> {
     try {
       const apiKey = this.apiKeyRepository.create({
         name: createApiKeyDto.name,
-        key: createApiKeyDto.key,
+        key: this.encryptionService.encrypt(createApiKeyDto.key),
       });
       const newApiKey = await this.apiKeyRepository.save({ ...apiKey, businessId });
 
@@ -29,19 +33,33 @@ export class ApiKeysService {
   }
 
   async findAll(businessId: string): Promise<ApiResponse<ApiKey[]>> {
-    console.log(businessId);
     const apiKeys = await this.apiKeyRepository.find({
       where: { businessId },
       order: { name: "ASC" },
     });
-    if (!apiKeys) throw new HttpException("Error al obtener las API keys", HttpStatus.NOT_FOUND);
 
-    return ApiResponse.success<ApiKey[]>("API keys encontradas", apiKeys);
+    const decryptedApiKeys = apiKeys.map((apiKey) => {
+      try {
+        return {
+          ...apiKey,
+          key: this.encryptionService.decrypt(apiKey.key).slice(0, 15) + "...",
+        };
+      } catch {
+        return { ...apiKey, key: apiKey.key };
+      }
+    });
+
+    return ApiResponse.success<ApiKey[]>("API keys encontradas", decryptedApiKeys);
   }
 
   async update(businessId: string, id: string, updateApiKeyDto: UpdateApiKeyDto): Promise<ApiResponse<void>> {
     try {
-      const updatedApiKey = await this.apiKeyRepository.update({ id, businessId }, updateApiKeyDto);
+      const dto = { ...updateApiKeyDto };
+      if (dto.key) {
+        dto.key = this.encryptionService.encrypt(dto.key);
+      }
+
+      const updatedApiKey = await this.apiKeyRepository.update({ id, businessId }, dto);
       if (updatedApiKey.affected === 0) throw new HttpException("API key no encontrada", HttpStatus.NOT_FOUND);
 
       return ApiResponse.success<void>("API key actualizada", undefined);
