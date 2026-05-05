@@ -15,7 +15,7 @@ export class CreateApiKeyDto {
   @MinLength(2, { message: "El enlace debe tener al menos 2 caracteres" })
   @IsString({ message: "El enlace debe ser una cadena de texto" })
   @IsOptional()
-  linkedTo: string;
+  linkedTo?: string;
 
   @IsBoolean({ message: "El estado debe ser un valor booleano" })
   @IsOptional()
