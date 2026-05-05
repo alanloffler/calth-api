@@ -19,6 +19,9 @@ export class ApiKey {
   @Column({ type: "varchar", length: 50, nullable: true })
   linkedTo: string;
 
+  @Column({ type: "boolean", default: false })
+  active: boolean;
+
   @CreateDateColumn({ type: "timestamptz", name: "created_at" })
   createdAt: Date;
 
