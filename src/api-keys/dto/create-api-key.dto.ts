@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
 
 export class CreateApiKeyDto {
   @MaxLength(50, { message: "El proveedor no puede superar 50 caracteres" })
@@ -16,4 +16,8 @@ export class CreateApiKeyDto {
   @IsString({ message: "El enlace debe ser una cadena de texto" })
   @IsOptional()
   linkedTo: string;
+
+  @IsBoolean({ message: "El estado debe ser un valor booleano" })
+  @IsOptional()
+  active: boolean;
 }
