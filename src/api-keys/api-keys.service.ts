@@ -20,6 +20,7 @@ export class ApiKeysService {
       const apiKey = this.apiKeyRepository.create({
         name: createApiKeyDto.name,
         key: this.encryptionService.encrypt(createApiKeyDto.key),
+        linkedTo: createApiKeyDto.linkedTo,
       });
       const newApiKey = await this.apiKeyRepository.save({ ...apiKey, businessId });
 
