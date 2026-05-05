@@ -17,7 +17,7 @@ export class ApiKey {
   key: string;
 
   @Column({ type: "varchar", length: 50, nullable: true })
-  linkedTo: string;
+  linkedTo: string | null;
 
   @Column({ type: "boolean", default: false })
   active: boolean;
