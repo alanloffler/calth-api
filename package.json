@@ -26,6 +26,8 @@
     "worker": "ts-node -r tsconfig-paths/register src/notifications/worker.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.75",
+    "@ai-sdk/openai": "^3.0.62",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.1.17",
@@ -38,6 +40,7 @@
     "@nestjs/platform-express": "^11.1.17",
     "@nestjs/typeorm": "^11.0.0",
     "@sendgrid/mail": "^8.1.6",
+    "ai": "^6.0.175",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.73.4",
     "cache-manager": "^7.2.8",
