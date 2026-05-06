@@ -131,7 +131,7 @@ export class AuthService {
 
   async getMe(payload: IPayload) {
     const user = payload.isSuperAdmin
-      ? await this.usersService.getUserGlobal(payload.id)
+      ? await this.usersService.getUserGlobal(payload.id, payload.businessId)
       : await this.usersService.getUser(payload.id, payload.businessId);
     if (!user) throw new HttpException("Usuario no encontrado", HttpStatus.NOT_FOUND);
 
