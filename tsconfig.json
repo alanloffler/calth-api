@@ -23,6 +23,7 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
+      "@ai/*": ["./src/ai/*"],
       "@admin/*": ["./src/admin/*"],
       "@api-keys/*": ["./src/api-keys/*"],
       "@auth/*": ["./src/auth/*"],
