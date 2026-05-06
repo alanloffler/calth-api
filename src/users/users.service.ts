@@ -4,6 +4,7 @@ import { DataSource, EntityManager, Repository } from "typeorm";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 
+import { ApiKey } from "@api-keys/entities/api-key.entity";
 import { ApiResponse } from "@common/helpers/api-response.helper";
 import { CreateAdminDto } from "@business/dto/create-business-full.dto";
 import { CreateUserDto } from "@users/dto/create-user.dto";
@@ -23,6 +24,7 @@ import { User } from "@users/entities/user.entity";
 @Injectable()
 export class UsersService {
   constructor(
+    @InjectRepository(ApiKey) private apiKeyRepository: Repository<ApiKey>,
     @InjectRepository(User) private userRepository: Repository<User>,
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
@@ -511,7 +513,7 @@ export class UsersService {
     return ApiResponse.success<User>("Usuario encontrado", user);
   }
 
-  public async getUserGlobal(id: string): Promise<User | null> {
+  public async getUserGlobal(id: string, businessId: string): Promise<(User & { hasAiActive: boolean; hasEmailActive: boolean }) | null> {
     const user = await this.userRepository
       .createQueryBuilder("user")
       .leftJoin("user.role", "role")
@@ -529,7 +531,14 @@ export class UsersService {
       .where("user.id = :id", { id })
       .getOne();
 
-    return user;
+    if (!user) return null;
+
+    const [hasAiActive, hasEmailActive] = await Promise.all([
+      this.apiKeyRepository.existsBy({ businessId, linkedTo: "ai", active: true }),
+      this.apiKeyRepository.existsBy({ businessId, linkedTo: "email", active: true }),
+    ]);
+
+    return { ...user, hasAiActive, hasEmailActive };
   }
 
   public async setRefreshToken(id: string, refreshToken: string): Promise<void> {
@@ -537,7 +546,7 @@ export class UsersService {
   }
 
   // Used in auth.service, there is managed error
-  public async getUser(id: string, businessId: string): Promise<User | null> {
+  public async getUser(id: string, businessId: string): Promise<(User & { hasAiActive: boolean; hasEmailActive: boolean }) | null> {
     const user = await this.userRepository
       .createQueryBuilder("user")
       .leftJoin("user.role", "role")
@@ -556,7 +565,14 @@ export class UsersService {
       .andWhere("user.id = :id", { id })
       .getOne();
 
-    return user;
+    if (!user) return null;
+
+    const [hasAiActive, hasEmailActive] = await Promise.all([
+      this.apiKeyRepository.existsBy({ businessId, linkedTo: "ai", active: true }),
+      this.apiKeyRepository.existsBy({ businessId, linkedTo: "email", active: true }),
+    ]);
+
+    return { ...user, hasAiActive, hasEmailActive };
   }
 
   public async checkEmailAvailability(email: string, businessId: string): Promise<ApiResponse<boolean>> {
