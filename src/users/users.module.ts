@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 
+import { ApiKey } from "@api-keys/entities/api-key.entity";
 import { CreatePatientUseCase } from "@users/use-cases/patient/create-patient.use-case";
 import { CreateProfessionalUseCase } from "@users/use-cases/professional/create-professional.use-case";
 import { PatientProfileService } from "@patient-profile/patient-profile.service";
@@ -19,7 +20,7 @@ import { UsersController } from "@users/users.controller";
 import { UsersService } from "@users/users.service";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Role, User]), ProfessionalProfileModule],
+  imports: [TypeOrmModule.forFeature([ApiKey, Role, User]), ProfessionalProfileModule],
   controllers: [UsersController],
   providers: [
     CreatePatientUseCase,
