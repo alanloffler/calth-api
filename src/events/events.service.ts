@@ -537,34 +537,63 @@ export class EventsService {
     professionalId: string,
     startDate: string,
     days: string,
-  ): Promise<ApiResponse<{ dates: { date: Date; available: boolean }[]; suggestion: Date | null }>> {
+  ): Promise<
+    ApiResponse<{
+      dates: { date: Date; available: boolean }[];
+      suggestions: { sameDay: Date[]; otherDaysSameHour: Date[]; otherDaysAnyHour: Date[] };
+    }>
+  > {
     const profile = await this.professionalProfileService.findByUserId(professionalId, businessId);
     if (!profile) throw new HttpException("Perfil profesional no encontrado", HttpStatus.NOT_FOUND);
 
     const date = new Date(startDate);
-    const _recurringDays = this.generateRecurringDates(date, Number(days));
-    const datesISO = _recurringDays.map((d) => d.toISOString());
+    const numDays = Number(days);
+    const slotMs = parseInt(profile.slotDuration, 10) * 60 * 1000;
+    const _recurringDays = this.generateRecurringDates(date, numDays);
 
-    const existing = await this.eventRepository
+    const horizonStart = new Date(date.getTime() - 24 * 60 * 60 * 1000);
+    const horizonEnd = new Date(date.getTime() + (7 + (numDays - 1) * 7) * 24 * 60 * 60 * 1000 + slotMs);
+
+    const eventsInHorizon = await this.eventRepository
       .createQueryBuilder("event")
       .where("event.businessId = :businessId", { businessId })
       .andWhere("event.professionalId = :professionalId", { professionalId })
-      .andWhere("event.startDate IN (:...dates)", { dates: datesISO })
+      .andWhere("event.startDate < :horizonEnd", { horizonEnd: horizonEnd.toISOString() })
+      .andWhere("event.endDate > :horizonStart", { horizonStart: horizonStart.toISOString() })
+      .select(["event.startDate", "event.endDate"])
       .getMany();
 
-    if (!existing) {
-      throw new HttpException("Error buscando turnos para la recurrencia", HttpStatus.INTERNAL_SERVER_ERROR);
+    const intervals = eventsInHorizon
+      .map((e) => ({ start: e.startDate.getTime(), end: e.endDate.getTime() }))
+      .sort((a, b) => a.start - b.start);
+
+    const conflictsExisting = (start: number, end: number): boolean => {
+      for (const i of intervals) {
+        if (i.start >= end) break;
+        if (i.end > start) return true;
+      }
+      return false;
+    };
+
+    const dates = _recurringDays.map((d) => {
+      const start = d.getTime();
+      return { date: d, available: !conflictsExisting(start, start + slotMs) };
+    });
+
+    const emptySuggestions = { sameDay: [] as Date[], otherDaysSameHour: [] as Date[], otherDaysAnyHour: [] as Date[] };
+    if (dates.every((d) => d.available)) {
+      return ApiResponse.success("Recurrencia verificada", { dates, suggestions: emptySuggestions });
     }
 
-    const occupiedSet = new Set(existing.map((e) => e.startDate.toISOString()));
-    const dates = _recurringDays.map((d) => ({ date: d, available: !occupiedSet.has(d.toISOString()) }));
+    const suggestions = this.buildRecurringSuggestions({
+      originalStart: date,
+      days: numDays,
+      profile,
+      conflictsExisting,
+      slotMs,
+    });
 
-    const allAvailable = dates.every((d) => d.available);
-    const suggestion = allAvailable
-      ? null
-      : await this.findSuggestion(date, Number(days), profile, businessId, professionalId);
-
-    return ApiResponse.success("Recurrencia verificada", { dates, suggestion });
+    return ApiResponse.success("Recurrencia verificada", { dates, suggestions });
   }
 
   // Private methods
@@ -651,30 +680,33 @@ export class EventsService {
     return dates;
   }
 
-  private async findSuggestion(
-    startDate: Date,
-    days: number,
-    profile: ProfessionalProfile,
-    businessId: string,
-    professionalId: string,
-  ): Promise<Date | null> {
-    const slotMs = parseInt(profile.slotDuration, 10) * 60 * 1000;
+  private buildRecurringSuggestions(params: {
+    originalStart: Date;
+    days: number;
+    profile: ProfessionalProfile;
+    conflictsExisting: (start: number, end: number) => boolean;
+    slotMs: number;
+  }): { sameDay: Date[]; otherDaysSameHour: Date[]; otherDaysAnyHour: Date[] } {
+    const { originalStart, days, profile, conflictsExisting, slotMs } = params;
+    const MAX_PER_TIER = 3;
+
     const [startH, startM] = profile.startHour.split(":").map(Number);
     const [endH, endM] = profile.endHour.split(":").map(Number);
     const exStart = profile.dailyExceptionStart ? profile.dailyExceptionStart.split(":").map(Number) : null;
     const exEnd = profile.dailyExceptionEnd ? profile.dailyExceptionEnd.split(":").map(Number) : null;
+    const slotDurationMin = parseInt(profile.slotDuration, 10);
+    const tzOffset = parseInt(this.TIME_ZONE, 10);
+    const scheduleStart = startH * 60 + startM;
+    const scheduleEnd = endH * 60 + endM;
+    const workingDays = profile.workingDays.map(Number);
 
     const isWithinSchedule = (candidate: Date): boolean => {
-      const dayOfWeek = candidate.getUTCDay();
-      if (!profile.workingDays.map(Number).includes(dayOfWeek)) return false;
+      if (!workingDays.includes(candidate.getUTCDay())) return false;
 
-      const tzOffset = parseInt(this.TIME_ZONE, 10);
       const localHours = candidate.getUTCHours() + tzOffset;
       const totalMinutes = localHours * 60 + candidate.getUTCMinutes();
-      const scheduleStart = startH * 60 + startM;
-      const scheduleEnd = endH * 60 + endM;
 
-      if (totalMinutes < scheduleStart || totalMinutes + parseInt(profile.slotDuration, 10) > scheduleEnd) return false;
+      if (totalMinutes < scheduleStart || totalMinutes + slotDurationMin > scheduleEnd) return false;
 
       if (exStart && exEnd) {
         const exStartMin = exStart[0] * 60 + exStart[1];
@@ -685,50 +717,53 @@ export class EventsService {
       return true;
     };
 
-    const areAllSlotsFree = async (candidateStart: Date): Promise<boolean> => {
+    const isSeriesFree = (candidateStart: Date): boolean => {
       if (!isWithinSchedule(candidateStart)) return false;
-
-      const candidateDates = this.generateRecurringDates(candidateStart, days);
-
-      for (const candidateDate of candidateDates) {
-        if (!isWithinSchedule(candidateDate)) return false;
-
-        const end = new Date(candidateDate.getTime() + slotMs);
-        const conflict = await this.eventRepository
-          .createQueryBuilder("event")
-          .where("event.businessId = :businessId", { businessId })
-          .andWhere("event.professionalId = :professionalId", { professionalId })
-          .andWhere("event.startDate < :end AND event.endDate > :start", {
-            start: candidateDate.toISOString(),
-            end: end.toISOString(),
-          })
-          .getOne();
-        if (conflict !== null) return false;
+      const candidates = this.generateRecurringDates(candidateStart, days);
+      for (const c of candidates) {
+        if (!isWithinSchedule(c)) return false;
+        const start = c.getTime();
+        if (conflictsExisting(start, start + slotMs)) return false;
       }
       return true;
     };
 
-    // 1. Same day, try other slots within schedule
-    const scheduleStart = startH * 60 + startM;
-    const scheduleEnd = endH * 60 + endM;
-    const slotDurationMin = parseInt(profile.slotDuration, 10);
-    const tzOffset = parseInt(this.TIME_ZONE, 10);
-
-    for (let min = scheduleStart; min + slotDurationMin <= scheduleEnd; min += slotDurationMin) {
-      const candidate = new Date(startDate);
+    // Tier 1: same day, different hours
+    const sameDay: Date[] = [];
+    for (
+      let min = scheduleStart;
+      min + slotDurationMin <= scheduleEnd && sameDay.length < MAX_PER_TIER;
+      min += slotDurationMin
+    ) {
+      const candidate = new Date(originalStart.getTime());
       candidate.setUTCHours(Math.floor(min / 60) - tzOffset, min % 60, 0, 0);
-      if (candidate.getTime() === startDate.getTime()) continue;
-      if (await areAllSlotsFree(candidate)) return candidate;
+      if (candidate.getTime() === originalStart.getTime()) continue;
+      if (isSeriesFree(candidate)) sameDay.push(candidate);
     }
 
-    // 2. Next days, same hour
-    for (let day = 1; day <= 7; day++) {
-      const candidate = new Date(startDate.getTime());
+    // Tier 2: other days, same hour
+    const otherDaysSameHour: Date[] = [];
+    for (let day = 1; day <= 7 && otherDaysSameHour.length < MAX_PER_TIER; day++) {
+      const candidate = new Date(originalStart.getTime());
       candidate.setUTCDate(candidate.getUTCDate() + day);
-      if (await areAllSlotsFree(candidate)) return candidate;
+      if (isSeriesFree(candidate)) otherDaysSameHour.push(candidate);
     }
 
-    return null;
+    // Tier 3: other days, any hour (deduplicated against Tier 2)
+    const tier2Set = new Set(otherDaysSameHour.map((d) => d.getTime()));
+    const otherDaysAnyHour: Date[] = [];
+    outer: for (let day = 1; day <= 7; day++) {
+      for (let min = scheduleStart; min + slotDurationMin <= scheduleEnd; min += slotDurationMin) {
+        if (otherDaysAnyHour.length >= MAX_PER_TIER) break outer;
+        const candidate = new Date(originalStart.getTime());
+        candidate.setUTCDate(candidate.getUTCDate() + day);
+        candidate.setUTCHours(Math.floor(min / 60) - tzOffset, min % 60, 0, 0);
+        if (tier2Set.has(candidate.getTime())) continue;
+        if (isSeriesFree(candidate)) otherDaysAnyHour.push(candidate);
+      }
+    }
+
+    return { sameDay, otherDaysSameHour, otherDaysAnyHour };
   }
 
   private async buildSiblingsMap(events: Event[]): Promise<Map<string, Event[]>> {
