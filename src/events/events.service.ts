@@ -701,7 +701,8 @@ export class EventsService {
     const workingDays = profile.workingDays.map(Number);
 
     const isWithinSchedule = (candidate: Date): boolean => {
-      if (!workingDays.includes(candidate.getUTCDay())) return false;
+      const localDay = new Date(candidate.getTime() + tzOffset * 3600 * 1000).getUTCDay();
+      if (!workingDays.includes(localDay)) return false;
 
       const localHours = candidate.getUTCHours() + tzOffset;
       const totalMinutes = localHours * 60 + candidate.getUTCMinutes();
