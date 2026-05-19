@@ -16,6 +16,7 @@ import {
   EVENT_USER_SELECT,
 } from "@events/constants/event-select.constant";
 import { Event } from "@events/entities/event.entity";
+import { FlagRescheduleDto } from "@events/dto/flag-reschedule.dto";
 import { IScheduleImpactResponse } from "@events/interfaces/schedule-impact-response.interface";
 import { ProfessionalProfile } from "@professional-profile/entities/professional-profile.entity";
 import { ProfessionalProfileService } from "@professional-profile/professional-profile.service";
@@ -498,7 +499,10 @@ export class EventsService {
 
     if (!slotAvailable) throw new HttpException("El turno se superpone con otro existente", HttpStatus.BAD_REQUEST);
 
-    const result = await this.eventRepository.update(id, updateEventDto);
+    const result = await this.eventRepository.update(id, {
+      ...updateEventDto,
+      ...(updateEventDto.startDate && { needsReschedule: false }),
+    });
     if (!result) throw new HttpException("Error al actualizar turno", HttpStatus.BAD_REQUEST);
 
     const updatedEvent = await this.findOneById(id, businessId);
@@ -599,40 +603,45 @@ export class EventsService {
   }
 
   async checkScheduleImpact(businessId: string, dto: ScheduleImpactDto): Promise<ApiResponse<IScheduleImpactResponse>> {
-    const { professionalId, startHour, endHour, workingDays } = dto;
+    const professional = await this.usersService.findOneById(dto.professionalId, businessId);
+    if (!professional) throw new HttpException("Profesional no encontrado", HttpStatus.NOT_FOUND);
 
-    const events = await this.eventRepository
-      .createQueryBuilder("event")
-      .where("event.businessId = :businessId", { businessId })
-      .andWhere("event.professionalId = :professionalId", { professionalId })
-      .andWhere("event.status = :status", { status: EEventStatus.PENDING })
-      .andWhere(
-        `(event.start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::date >= (NOW() AT TIME ZONE 'America/Argentina/Buenos_Aires')::date`,
-      )
-      .andWhere(
-        new Brackets((qb) => {
-          qb.where(
-            `EXTRACT(DOW FROM event.start_date AT TIME ZONE 'America/Argentina/Buenos_Aires') NOT IN (:...workingDays)`,
-            { workingDays },
-          )
-            .orWhere(`(event.start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::time < :startHour::time`, {
-              startHour,
-            })
-            .orWhere(`(event.start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::time >= :endHour::time`, {
-              endHour,
-            });
-        }),
-      )
-      .leftJoin("event.user", "user")
-      .leftJoin("user.role", "userRole")
-      .select(["event", ...EVENT_USER_SELECT, ...EVENT_ROLE_SELECT])
-      .orderBy("event.start_date", "ASC")
-      .getMany();
+    try {
+      const events = await this.eventRepository
+        .createQueryBuilder("event")
+        .where("event.businessId = :businessId", { businessId })
+        .andWhere("event.professionalId = :professionalId", { professionalId: dto.professionalId })
+        .andWhere("event.status = :status", { status: EEventStatus.PENDING })
+        .andWhere(
+          `(event.start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::date >= (NOW() AT TIME ZONE 'America/Argentina/Buenos_Aires')::date`,
+        )
+        .andWhere(
+          new Brackets((qb) => {
+            qb.where(
+              `EXTRACT(DOW FROM event.start_date AT TIME ZONE 'America/Argentina/Buenos_Aires') NOT IN (:...workingDays)`,
+              { workingDays: dto.workingDays },
+            )
+              .orWhere(`(event.start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::time < :startHour::time`, {
+                startHour: dto.startHour,
+              })
+              .orWhere(`(event.start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::time >= :endHour::time`, {
+                endHour: dto.endHour,
+              });
+          }),
+        )
+        .leftJoin("event.user", "user")
+        .leftJoin("user.role", "userRole")
+        .select(["event", ...EVENT_USER_SELECT, ...EVENT_ROLE_SELECT])
+        .orderBy("event.start_date", "ASC")
+        .getMany();
 
-    return ApiResponse.success<IScheduleImpactResponse>("Impacto calculado", {
-      affectedCount: events.length,
-      events,
-    });
+      return ApiResponse.success<IScheduleImpactResponse>("Impacto calculado", {
+        affectedCount: events.length,
+        events,
+      });
+    } catch {
+      throw new HttpException("Error al calcular el impacto del cambio de horario", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   // Private methods
