@@ -16,7 +16,6 @@ import {
   EVENT_USER_SELECT,
 } from "@events/constants/event-select.constant";
 import { Event } from "@events/entities/event.entity";
-import { FlagRescheduleDto } from "@events/dto/flag-reschedule.dto";
 import { IScheduleImpactResponse } from "@events/interfaces/schedule-impact-response.interface";
 import { ProfessionalProfile } from "@professional-profile/entities/professional-profile.entity";
 import { ProfessionalProfileService } from "@professional-profile/professional-profile.service";
