@@ -53,6 +53,9 @@ export class Event {
   @Column({ name: "recurrent_id", type: "uuid", nullable: true, default: null })
   recurrentId: string | null;
 
+  @Column({ name: "needs_reschedule", type: "boolean", default: false })
+  needsReschedule: boolean;
+
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
