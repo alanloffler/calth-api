@@ -1,4 +1,4 @@
-import { DataSource, LessThan, MoreThan, Not, Repository } from "typeorm";
+import { Brackets, DataSource, LessThan, MoreThan, Not, Repository } from "typeorm";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -16,8 +16,10 @@ import {
   EVENT_USER_SELECT,
 } from "@events/constants/event-select.constant";
 import { Event } from "@events/entities/event.entity";
+import { IScheduleImpactResponse } from "@events/interfaces/schedule-impact-response.interface";
 import { ProfessionalProfile } from "@professional-profile/entities/professional-profile.entity";
 import { ProfessionalProfileService } from "@professional-profile/professional-profile.service";
+import { ScheduleImpactDto } from "@events/dto/schedule-impact.dto";
 import { UpdateEventDto } from "@events/dto/update-event.dto";
 import { UsersService } from "@users/users.service";
 
@@ -594,6 +596,41 @@ export class EventsService {
     });
 
     return ApiResponse.success("Recurrencia verificada", { dates, suggestions });
+  }
+
+  async checkScheduleImpact(businessId: string, dto: ScheduleImpactDto): Promise<ApiResponse<IScheduleImpactResponse>> {
+    const { professionalId, startHour, endHour, workingDays } = dto;
+
+    const events = await this.eventRepository
+      .createQueryBuilder("event")
+      .where("event.businessId = :businessId", { businessId })
+      .andWhere("event.professionalId = :professionalId", { professionalId })
+      .andWhere("event.status = :status", { status: EEventStatus.PENDING })
+      .andWhere("event.startDate > :now", { now: new Date() })
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where(
+            `EXTRACT(DOW FROM event.start_date AT TIME ZONE 'America/Argentina/Buenos_Aires') NOT IN (:...workingDays)`,
+            { workingDays },
+          )
+            .orWhere(`(event.start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::time < :startHour::time`, {
+              startHour,
+            })
+            .orWhere(`(event.start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::time >= :endHour::time`, {
+              endHour,
+            });
+        }),
+      )
+      .leftJoin("event.user", "user")
+      .leftJoin("user.role", "userRole")
+      .select(["event", ...EVENT_USER_SELECT, ...EVENT_ROLE_SELECT])
+      .orderBy("event.start_date", "ASC")
+      .getMany();
+
+    return ApiResponse.success<IScheduleImpactResponse>("Impacto calculado", {
+      affectedCount: events.length,
+      events,
+    });
   }
 
   // Private methods
