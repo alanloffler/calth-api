@@ -39,6 +39,7 @@ export class UpdateProfessionalUseCase {
           const newEndHour = updateDto.profile.endHour ?? currentProfile.endHour;
           const newWorkingDays = (updateDto.profile.workingDays ?? currentProfile.workingDays).map(Number);
 
+          // Scan and assign needsReschedule
           await queryRunner.manager
             .createQueryBuilder()
             .update(Event)
@@ -63,6 +64,30 @@ export class UpdateProfessionalUseCase {
                   });
               }),
             )
+            .execute();
+
+          // Scan and revert needsReschedule
+          await queryRunner.manager
+            .createQueryBuilder()
+            .update(Event)
+            .set({ needsReschedule: false })
+            .where("professional_id = :userId", { userId })
+            .andWhere("business_id = :businessId", { businessId })
+            .andWhere("status = :status", { status: EEventStatus.PENDING })
+            .andWhere("needs_reschedule = true")
+            .andWhere(
+              `(start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::date >= (NOW() AT TIME ZONE 'America/Argentina/Buenos_Aires')::date`,
+            )
+            .andWhere(
+              `EXTRACT(DOW FROM start_date AT TIME ZONE 'America/Argentina/Buenos_Aires') IN (:...workingDays)`,
+              { workingDays: newWorkingDays },
+            )
+            .andWhere(`(start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::time >= :startHour::time`, {
+              startHour: newStartHour,
+            })
+            .andWhere(`(start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::time < :endHour::time`, {
+              endHour: newEndHour,
+            })
             .execute();
         }
       }
