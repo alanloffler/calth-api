@@ -606,7 +606,9 @@ export class EventsService {
       .where("event.businessId = :businessId", { businessId })
       .andWhere("event.professionalId = :professionalId", { professionalId })
       .andWhere("event.status = :status", { status: EEventStatus.PENDING })
-      .andWhere("event.startDate > :now", { now: new Date() })
+      .andWhere(
+        `(event.start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::date >= (NOW() AT TIME ZONE 'America/Argentina/Buenos_Aires')::date`,
+      )
       .andWhere(
         new Brackets((qb) => {
           qb.where(
