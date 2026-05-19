@@ -7,6 +7,7 @@ import { EventsService } from "@events/events.service";
 import { JwtAuthGuard } from "@auth/guards/jwt-auth.guard";
 import { PermissionsGuard } from "@auth/guards/permissions.guard";
 import { RequiredPermissions } from "@auth/decorators/required-permissions.decorator";
+import { ScheduleImpactDto } from "@events/dto/schedule-impact.dto";
 import { UpdateEventDto } from "@events/dto/update-event.dto";
 
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -82,6 +83,12 @@ export class EventsController {
     @Query("days") days: string,
   ) {
     return this.eventsService.checkRecurring(businessId, professionalId, startDate, days);
+  }
+
+  @RequiredPermissions("events-view")
+  @Post("schedule-impact")
+  checkScheduleImpact(@BusinessId(ParseUUIDPipe) businessId: string, @Body() dto: ScheduleImpactDto) {
+    return this.eventsService.checkScheduleImpact(businessId, dto);
   }
 
   @RequiredPermissions("events-view")
