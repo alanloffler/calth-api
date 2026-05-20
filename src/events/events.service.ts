@@ -209,6 +209,7 @@ export class EventsService {
     patientId?: string,
     professionalId?: string,
     recurrent?: string,
+    needsReschedule?: string,
     status?: string,
     sortBy?: string,
     sortOrder?: string,
@@ -254,6 +255,9 @@ export class EventsService {
     }
     if (recurrent === "true") {
       baseQb.andWhere("event.recurrentId IS NOT NULL");
+    }
+    if (needsReschedule === "true") {
+      baseQb.andWhere("event.needsReschedule IS TRUE");
     }
 
     let sortKey: string;
