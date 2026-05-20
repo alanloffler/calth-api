@@ -68,8 +68,8 @@ export class PermissionsGuard implements CanActivate {
       const rows: { action_key: string }[] = await this.dataSource.query(
         `
           SELECT p.action_key
-          FROM permissions p
-          LEFT JOIN role_permission rp
+          FROM permission p
+          LEFT JOIN role_permissions rp
             ON rp.permission_id = p.id AND rp.role_id = $2
           LEFT JOIN business_role_permissions brp
             ON brp.permission_id = p.id AND brp.role_id = $2 AND brp.business_id = $1
