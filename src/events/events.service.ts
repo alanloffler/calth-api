@@ -180,6 +180,26 @@ export class EventsService {
     return ApiResponse.success<Record<number, boolean>>("Días ocupados", result);
   }
 
+  async findNeedsReschedule(businessId: string, professionalId?: string) {
+    try {
+      const qb = this.eventRepository
+        .createQueryBuilder("event")
+        .where("event.businessId = :businessId", { businessId })
+        .andWhere("event.needsReschedule IS TRUE")
+        .select("event.id");
+
+      if (professionalId) {
+        qb.andWhere("event.professionalId = :professionalId", { professionalId });
+      }
+
+      const events = await qb.getMany();
+
+      return ApiResponse.success("Turnos a reprogramar", { count: events.length, eventsId: events });
+    } catch (error) {
+      throw new HttpException("Error al obtener los turnos a reprogramar", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   async findAllByBusiness(businessId: string, limit: string): Promise<ApiResponse<Event[]>> {
     const queryLimit = limit ? parseInt(limit) : 10;
 
