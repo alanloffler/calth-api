@@ -88,6 +88,20 @@ export class UpdateProfessionalUseCase {
             .andWhere(`(start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::time < :endHour::time`, {
               endHour: newEndHour,
             })
+            .andWhere(
+              `
+              NOT EXISTS (
+                SELECT 1 FROM blocked_days bd
+                WHERE bd.professional_id = :userId
+                AND bd.business_id = :businessId
+                AND (
+                  (bd.recurrent = false AND (bd.date AT TIME ZONE 'America/Argentina/Buenos_Aires')::date = (start_date AT TIME ZONE 'America/Argentina/Buenos_Aires')::date)
+                  OR
+                  (bd.recurrent = true AND EXTRACT(DOW FROM bd.date AT TIME ZONE 'America/Argentina/Buenos_Aires') = EXTRACT(DOW FROM start_date AT TIME ZONE 'America/Argentina/Buenos_Aires'))
+                )
+              )
+            `,
+            )
             .execute();
         }
       }
