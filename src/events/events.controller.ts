@@ -92,6 +92,15 @@ export class EventsController {
   }
 
   @RequiredPermissions("events-view")
+  @Get("needs-reschedule")
+  findNeedsReschedule(
+    @BusinessId(ParseUUIDPipe) businessId: string,
+    @Query("professionalId", new ParseUUIDPipe({ optional: true })) professionalId?: string,
+  ) {
+    return this.eventsService.findNeedsReschedule(businessId, professionalId);
+  }
+
+  @RequiredPermissions("events-view")
   @Get("business")
   findAllByBusiness(@BusinessId(ParseUUIDPipe) businessId: string, @Query("limit") limit: string) {
     return this.eventsService.findAllByBusiness(businessId, limit);
